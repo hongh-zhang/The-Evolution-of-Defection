@@ -1,7 +1,10 @@
 import numpy as np
+from collections import namedtuple
 from network.layers.layer import Layer
 
 class BatchNorm_layer(Layer):
+    
+    Cache = namedtuple('cache', ('x_mu', 'inv_std', 'xhat'))
     
     def __init__(self, nodes, verbosity=0):
         self.nodes = nodes
@@ -11,7 +14,8 @@ class BatchNorm_layer(Layer):
     
     def reset(self):
         # initialize mean & std
-        self.mean = self.std = 0
+        self.mean = 0
+        self.std = 1
         
         # initialize scale & shift
         self.gamma = np.expand_dims(np.ones(self.nodes), axis=0)
@@ -46,7 +50,7 @@ class BatchNorm_layer(Layer):
         # apply scale & shift
         X = X * self.gamma + self.beta
         
-        self.cache = (sample_mean, (1/(sample_std)), X)
+        self.cache = BatchNorm_layer.Cache(sample_mean, (1/(sample_std)), X)
         
         if self.verbosity:
             print(f"Sample: {sample_mean[0]}.")
@@ -62,7 +66,7 @@ class BatchNorm_layer(Layer):
         # adapted from https://kevinzakka.github.io/2016/09/14/batch_normalization/
         N, D = error.shape
         x_mu, inv_var, x_hat = self.cache
-
+        
         # intermediate partial derivatives
         dxhat = error * self.gamma
 

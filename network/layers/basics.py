@@ -1,6 +1,7 @@
 # This file contains Layer objects to be used in neural networks
 
 import numpy as np
+from collections import namedtuple
 from network.layers.utils import *
 from network.layers.layer import Layer
 
@@ -88,61 +89,55 @@ class Linear_layer(Layer):
         return dx
     
 
+    
 class Activation_layer(Layer):
+    """An activation layer maps non-linearity to inputs."""
+    
+    # caches input & output for backpropagation
+    Cache = namedtuple('cache', ('x', 'y'))
     
     def __init__(self, function='sigmoid'):
-        """
-        An activation layer,
-        available function: ['sigmoid', 'ReLU', 'LReLU', 'ELU' 'softmax', 'tanh']
-        """
+        """Available function: ['sigmoid', 'ReLU', 'LReLU', 'ELU' 'softmax', 'tanh']"""
         super().__init__()
         self.type = 'activation'
         function = function.lower()
         self.func_name = function
         
         # define activation functions
-        # func_forward is the activation function
-        # func_backward is the backpropagation formulas, usually error * f'(x)
-        # lambda arguments: x=inputs, e=errors
-        
+        # functions imported from utils.py
         if function == 'relu':
-            self.func_forward = lambda x: x * (x>=0)
-            self.func_backward = lambda e, x: e * (x>=0).astype(int)
+            self.func_forward  = relu
+            self.func_backward = relu_
             
         elif function == 'lrelu':
-            self.func_forward = lambda x: np.maximum(x, 0.001*x)
-            self.func_backward = lambda e, x: e * ((x<0) * 0.001 + 0.999)
+            self.func_forward  = lrelu
+            self.func_backward = lrelu_
             
         elif function == 'elu':
-            self.func_forward = lambda x: elu(x, 1.0)
-            self.func_backward = lambda e, x: e * elu_prime(x, 1.0)
+            self.func_forward  = elu
+            self.func_backward = elu_
         
         elif function == 'tanh':
-            self.func_forward = lambda x: tanh(x)
-            self.func_backward = lambda e, x: e * sech(x)
+            self.func_forward  = tanh
+            self.func_backward = tanh_
             
         elif function == 'softmax':
-            self.func_forward = lambda x: stable_softmax(x)
-            self.func_backward = lambda e, x: e
+            self.func_forward  = softmax
+            self.func_backward = softmax_
             # note this is a oversimplified version
             # only valid on the output layer with cross entropy loss
             
         elif function in ['sigmoid', 'logistic']:
-            self.func_forward = lambda x: expit(x)
-            self.func_backward = lambda e, x: e * expit(x) * (1-expit(x))
-
+            self.func_forward  = expit
+            self.func_backward = expit_
+            
         else:
             raise ValueError('Invalid activation function')
     
     def forward(self, X, param):
-        
         output = self.func_forward(X)
-        
-        # cache inputs & outputs for backward calculation
-        self.input = X
-        self.output = output
-        
+        self.cache = Activation_layer.Cache(X, output)
         return output
     
-    def backward(self, error, param):
-        return self.func_backward(error, self.input)
+    def backward(self, dout, param):
+        return self.func_backward(self.cache.x, self.cache.y, dout)

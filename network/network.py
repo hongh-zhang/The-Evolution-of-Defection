@@ -75,8 +75,8 @@ class NeuralNetwork:
             magnitude = np.linalg.norm(dout)
             if magnitude > clip:
                 dout = dout / magnitude * clip
-            
             dout = layer.backward(dout, param)
+        
                    
     def query(self, X, mode='classification'):
         """
