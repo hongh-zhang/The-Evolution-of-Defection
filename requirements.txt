@@ -1,0 +1,3 @@
+# Not completed yet, just a placeholder for requirements.txt
+
+Axelrod==4.11.0
