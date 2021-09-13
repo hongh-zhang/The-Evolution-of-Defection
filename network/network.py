@@ -3,12 +3,31 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 
 class NeuralNetwork:
-    """
-    A simple ANN class,
-    Note that every array input is in the form [#instance x #attributes]
-    """
+    """A Neural Network."""
+    
     def __init__(self, layers):
-        # define structure
+        """Initialize NeuralNetwork.
+
+        Parameters
+        ----------
+        layers :  list of Layer
+            The structure of this NeuralNetwork
+
+        
+        Example
+        -------
+        A 3-layer network for MNIST dataset can be created via:
+        
+        nn = network.NeuralNetwork([
+                    network.Linear_layer(784, 200, bias=0),
+                    network.Activation_layer(function='ReLU'),
+
+                    network.Linear_layer(200, 10, bias=0),
+                    network.Activation_layer(function='softmax')
+                    ])
+
+        """
+
         self.layers = layers
         
         self.train_loss = []  # for storing loss value in each epoch
@@ -18,37 +37,61 @@ class NeuralNetwork:
                             "eps": None, "beta":None, "epoch": None, 'method': None, 
                             't': None, 'clip': None, 'decay': None}
     
-    def __call__(self, X):
-        if X.ndim == 1:
-            X = np.expand_dims(X, axis=0)
-        return self.query(X)
-    
     def forward(self, X, param):
-        """
-        Forward signals,
-        Arguments:
-        (numpy 2d array) X: Inputs
-        """
+        """Forward signal"""
         output = X  # temp output from each layer
         for layer in self.layers:
             output = layer.forward(output, param)
         return output
     
+    def query(self, X, mode='classification', param=None):
+        """Query the network,
+        
+        Parameters
+        -------------
+        X: ndarray
+            Inputs
+        
+        mode: str, default='classification'
+            A string indicating running mode. Returns predicted label instead 
+            of raw probability if mode='classification'
+        
+        """
+        #print(param)
+        if not param:
+            param = self.dummy_param
+        output = self.forward(X, param)
+        if mode == 'classification':
+            output = np.argmax(output, axis=1)
+        return output
+    
     def train(self, X, y, param, loss_func="mse", rand=True):
         """
-        Train the ANN,
-        Arguments:
-        (numpy 2d array) X: Inputs,
-        (numpy 2d array) y: True labels,
-        (dict) param: Dictionary of hyperparameters,
-        (int) batch_size,
-        (str) loss_func: ["mse", "cross_entropy"]
+        Train the ANN with given dataset
+        
+        Parameters
+        ----------
+        X :  ndarray
+            Attributes of training data
+            
+        y :  ndarray
+            Labels of training data
+            
+        param :  Dict
+            Dictionary containing hyperparameters
+            
+        loss_func :  str, default='mse'
+            The structure of this NeuralNetwork
+            
+        rand :  Bool, default=True
+            Enable random shuffle or not
+            
         """
         param["mode"] = 'train'
         param["epoch"] += 1
         batch_size = param.get("batch", 32)
         error_ls = []
-        self.calc_loss = self.get_loss_func(loss_func)
+        self.set_loss_func(loss_func)
         
         # get random batches then iterate
         X_split, y_split = self.split_data(X, y, batch_size, rand=rand)
@@ -76,13 +119,6 @@ class NeuralNetwork:
             if magnitude > clip:
                 dout = dout / magnitude * clip
             dout = layer.backward(dout, param)
-        
-                   
-    def query(self, X, mode='classification'):
-        output = self.forward(X, self.dummy_param)
-        if mode == 'classification':
-            output = np.argmax(output, axis=1)
-        return output
     
     def validate(self, X_t, y_t, param, loss_func = "mse"):
         param["mode"] = 'test'
@@ -93,40 +129,37 @@ class NeuralNetwork:
     # -----
     # help functions
     # ----
-    def get_loss_func(self, function):
+    def set_loss_func(self, function):
         """Return a function that calculate output loss,
         loss_func :: (ytrue, yhat) -> (dout, loss)"""
 
         if function == "cross_entropy":
             def loss_func(ytrue, yhat):
                 yhat = np.clip(yhat, 1e-16, 1. - 1e-16)  # numerical stability
-                loss = -np.sum(ytrue * np.log(yhat))
                 dout = -(ytrue/yhat) + (1-ytrue)/(1-yhat)
+                loss = -np.sum(ytrue * np.log(yhat))
                 return dout, loss
-            return loss_func
             
         elif function == "fast_cross_entropy":  # simplified cross entropy, to be used with fast_softmax
             def loss_func(ytrue, yhat):
+                dout = yhat - ytrue
                 yhat = np.clip(yhat, 1e-16, 1. - 1e-16)
                 loss = -np.sum(ytrue * np.log(yhat))
-                dout = yhat - ytrue
                 return dout, loss
-            return loss_func
             
         elif function == "mse":
             def loss_func(ytrue, yhat):
-                loss = np.sum(errors**2)/(errors.size)
                 dout = yhat - ytrue
+                loss = np.sum(dout**2)/(dout.size)
                 return dout, loss
-            return loss_func
             
         else:
-            raise ValueError('Invalid loss function')    
+            raise ValueError('Invalid loss function')
+            
+        self.calc_loss = loss_func
     
     def split_data(self, X, y, batch_size, rand=True):
-        """
-        Shuffle and split training data into random batches
-        """
+        """Shuffle and split training data into random batches."""
         # shuffle
         if rand:
             X, y = shuffle(X, y)
@@ -152,7 +185,12 @@ class NeuralNetwork:
             print(f"--{i}--")
             layer.print_parameters()
             i += 1
-            
+    
+    def __call__(self, X, mode='asdfghjkl', param=None):
+        if X.ndim == 1:
+            X = np.expand_dims(X, axis=0)
+        return self.query(X, mode=mode, param=param)
+    
     def reset(self):
         self.train_loss = []
         self.test_loss = []

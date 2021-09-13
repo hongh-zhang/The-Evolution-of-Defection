@@ -11,25 +11,25 @@ class Maxout_layer(Layer):
     """
     
 
-    def __init__(self, input_nodes, output_nodes, bias=0):
+    def __init__(self, input_nodes, output_nodes):
         
         self.type = 'maxout'
         
         # number of inputs & outputs
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
-        self.bias = bias
-        
-        super().__init__()
+        self.reset()
     
     def reset(self):
-        
         # initialize weights & bias
         self.w1 = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
         self.w2 = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
         
-        self.w1 = np.concatenate((self.w1, np.ones((1,self.output_nodes))*self.bias), axis=0)
-        self.w2 = np.concatenate((self.w2, np.ones((1,self.output_nodes))*self.bias), axis=0)
+        b1 = np.random.randn(1, self.output_nodes) * 2
+        b2 = np.random.randn(1, self.output_nodes) * 2
+        
+        self.w1 = np.concatenate((self.w1, b1), axis=0)
+        self.w2 = np.concatenate((self.w2, b2), axis=0)
         
         # initialize moments
         self.m11 = np.zeros(self.w1.shape)

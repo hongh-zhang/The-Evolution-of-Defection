@@ -2,7 +2,7 @@
 
 import numpy as np
 from collections import namedtuple
-from network.layers.utils import *
+from network.layers.functions import *
 from network.layers.layer import Layer
 
 class Linear_layer(Layer):
@@ -14,6 +14,7 @@ class Linear_layer(Layer):
         (int) output_nodes = number of output nodes,
         (bool) bias: enable or disable bias,
         """
+        super().__init__()
         
         self.type = 'linear'
         
@@ -21,9 +22,7 @@ class Linear_layer(Layer):
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
         self.bias = bias
-        
-        super().__init__()
-        #self.reset()
+        self.reset()
     
     def reset(self):
         """The actual init function, seperate from __init__ to allow NeuralNetworks to be re-initialized"""
@@ -96,7 +95,7 @@ class Activation_layer(Layer):
     # caches input & output for backpropagation
     Cache = namedtuple('cache', ('x', 'y'))
     
-    def __init__(self, function='sigmoid', custom=None):
+    def __init__(self, function, custom=None):
         """
         Available function: ['sigmoid', 'ReLU', 'LReLU', 'ELU' 'softmax', 'tanh'],
         also accepts custom functions, input in the kwarg custom=(func_forward, func_backward).

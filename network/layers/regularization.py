@@ -7,10 +7,11 @@ class BatchNorm_layer(Layer):
     Cache = namedtuple('cache', ('x_mu', 'inv_std', 'xhat'))
     
     def __init__(self, nodes, verbosity=0):
+        super().__init__()
         self.nodes = nodes
         self.verbosity = verbosity
         self.type = 'batch_norm'
-        super().__init__()
+        self.reset()
     
     def reset(self):
         # initialize mean & std
@@ -30,7 +31,7 @@ class BatchNorm_layer(Layer):
         self.parameters = [self.mean, self.std, self.gamma, self.beta]
     
     def forward(self, X, param):
-        
+
         # set parameters
         mode = param.get("mode", 'test')
         momentum = param.get("momentum", 0.9)
@@ -50,7 +51,7 @@ class BatchNorm_layer(Layer):
         # apply scale & shift
         X = X * self.gamma + self.beta
         
-        self.cache = BatchNorm_layer.Cache(sample_mean, (1/(sample_std)), X)
+        self.cache = BatchNorm_layer.Cache(sample_mean, (1/(sample_std+1e-16)), X)
         
         if self.verbosity:
             print(f"Sample: {sample_mean[0]}.")

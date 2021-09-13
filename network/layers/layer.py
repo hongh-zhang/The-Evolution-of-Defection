@@ -13,10 +13,10 @@ class Layer:
     
     def __init__(self):
         self.type = "blank"
-        self.reset()
+        self.parameters = []  # this should be a list of pointers to objects to be printed in self.print_parameters
         
     def reset(self):
-        self.parameters = []  # this should be a list of pointers to objects to be printed in self.print_parameters
+        pass
         
     def forward(self, X, param):
         return X
@@ -70,5 +70,6 @@ class Layer:
             return (lr * delta.dw), delta.m1, delta.m2
         
     def print_parameters(self):
+        print(f"Printing {self.type} layer:")
         for p in self.parameters:
             print(p)
