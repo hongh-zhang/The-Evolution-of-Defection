@@ -1,3 +1,6 @@
-# Not completed yet, just a placeholder for requirements.txt
+# Not a complete list...
+# But the rest should be commonly used modules
+# Please manually install if there is anything missing
+# Sorry for the inconvinience
 
 Axelrod==4.11.0

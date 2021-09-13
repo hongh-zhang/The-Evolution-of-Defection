@@ -96,43 +96,55 @@ class Activation_layer(Layer):
     # caches input & output for backpropagation
     Cache = namedtuple('cache', ('x', 'y'))
     
-    def __init__(self, function='sigmoid'):
-        """Available function: ['sigmoid', 'ReLU', 'LReLU', 'ELU' 'softmax', 'tanh']"""
+    def __init__(self, function='sigmoid', custom=None):
+        """
+        Available function: ['sigmoid', 'ReLU', 'LReLU', 'ELU' 'softmax', 'tanh'],
+        also accepts custom functions, input in the kwarg custom=(func_forward, func_backward).
+        """
         super().__init__()
         self.type = 'activation'
         function = function.lower()
         self.func_name = function
         
         # define activation functions
-        # functions imported from utils.py
-        if function == 'relu':
-            self.func_forward  = relu
-            self.func_backward = relu_
-            
-        elif function == 'lrelu':
-            self.func_forward  = lrelu
-            self.func_backward = lrelu_
-            
-        elif function == 'elu':
-            self.func_forward  = elu
-            self.func_backward = elu_
-        
-        elif function == 'tanh':
-            self.func_forward  = tanh
-            self.func_backward = tanh_
-            
-        elif function == 'softmax':
-            self.func_forward  = softmax
-            self.func_backward = softmax_
-            # note this is a oversimplified version
-            # only valid on the output layer with cross entropy loss
-            
-        elif function in ['sigmoid', 'logistic']:
-            self.func_forward  = expit
-            self.func_backward = expit_
+        if custom:
+            self.func_forward  = custom[0]
+            self.func_backward = custom[1]
             
         else:
-            raise ValueError('Invalid activation function')
+            # functions imported from utils.py
+            if function == 'relu':
+                self.func_forward  = relu
+                self.func_backward = relu_
+
+            elif function == 'lrelu':
+                self.func_forward  = lrelu
+                self.func_backward = lrelu_
+
+            elif function == 'elu':
+                self.func_forward  = elu
+                self.func_backward = elu_
+
+            elif function == 'tanh':
+                self.func_forward  = tanh
+                self.func_backward = tanh_
+
+            elif function == 'softmax':
+                self.func_forward  = softmax
+                self.func_backward = softmax_
+                
+            # simplified softmax that does not calculate partial derivative
+            # to be used with fast_cross_entropy loss
+            elif function == 'fast_softmax':
+                self.func_forward  = softmax
+                self.func_backward = lambda x, y, dy: dy
+
+            elif function in ['sigmoid', 'logistic']:
+                self.func_forward  = expit
+                self.func_backward = expit_
+
+            else:
+                raise ValueError('Invalid activation function')
     
     def forward(self, X, param):
         output = self.func_forward(X)

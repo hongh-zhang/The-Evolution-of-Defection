@@ -2,7 +2,8 @@
 
 import numpy as np
 from math import exp
-from scipy.special import softmax, expit
+from scipy.special import expit
+from scipy.special import softmax as softmaxxx
 
 # activation functions are defined in pairs
 # f is the forward function
@@ -13,7 +14,7 @@ from scipy.special import softmax, expit
 
 
 # sigmoid
-expit_ = lambda x, y, dy:  e * y * (1-y)
+expit_ = lambda x, y, dy:  dy * y * (1-y)
 
 
 # tanh
@@ -24,7 +25,9 @@ tanh_ = lambda x, y, dy: dy / np.cosh(x)
 # softmax
 # oversimplified version of backward function
 # only works with cross entropy loss function
-softmax_ = lambda x, y, dy: dy
+softmax  = lambda x: softmaxxx(x, axis=1)
+#softmax_ = lambda x, y, dy: dy
+softmax_ = lambda x, y, dy: dy * y * (1-y)
 
 
 # ReLU

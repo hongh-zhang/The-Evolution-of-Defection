@@ -46,9 +46,9 @@ class NeuralNetwork:
         """
         param["mode"] = 'train'
         param["epoch"] += 1
-        clip = param.get("clip", 1.0)
         batch_size = param.get("batch", 32)
         error_ls = []
+        self.calc_loss = self.get_loss_func(loss_func)
         
         # get random batches then iterate
         X_split, y_split = self.split_data(X, y, batch_size, rand=rand)
@@ -56,11 +56,11 @@ class NeuralNetwork:
             
             # forward
             yhat = self.forward(X_batch, param)
-            dout, batch_loss = self.calculate_loss(y_batch, yhat, function=loss_func)
-            error_ls.append(batch_loss)
             
             # backward
-            self.backprop(dout, param)
+            dout, batch_loss = self.calc_loss(y_batch, yhat)
+            error_ls.append(batch_loss)
+            self.backprop(dout/batch_size, param)
         
         # record & report
         avg_loss = sum(error_ls)/len(error_ls)
@@ -79,34 +79,49 @@ class NeuralNetwork:
         
                    
     def query(self, X, mode='classification'):
-        """
-        Query the neural network with input X,
-        If mode is set to 'classification',
-        Returns the index with highest conditional probability
-        """
         output = self.forward(X, self.dummy_param)
         if mode == 'classification':
             output = np.argmax(output, axis=1)
         return output
     
-    def validate(self, X_t, y_t, param, loss_func = "cross_entropy"):
+    def validate(self, X_t, y_t, param, loss_func = "mse"):
         param["mode"] = 'test'
         yhat = self.forward(X_t, param)
-        _, test_loss = self.calculate_loss(y_t, yhat, function=loss_func)
-        self.test_loss.append((param['epoch'], float(test_loss)))
+        _, test_loss = self.calc_loss(y_t, yhat)
+        self.test_loss.append((param['epoch'], test_loss))
     
     # -----
     # help functions
     # ----
-    def calculate_loss(self, y_true, yhat, function="cross_entropy"):
-        assert function in ["mse", "cross_entropy"], "Invalid loss function!"
-        errors = yhat - y_true
+    def get_loss_func(self, function):
+        """Return a function that calculate output loss,
+        loss_func :: (ytrue, yhat) -> (dout, loss)"""
+
         if function == "cross_entropy":
-            yhat = np.clip(yhat, 1e-12, 1. - 1e-12)  # avoid zero
-            loss = -np.sum(np.log(yhat+1e-10) * y_true) / yhat.shape[0]
+            def loss_func(ytrue, yhat):
+                yhat = np.clip(yhat, 1e-16, 1. - 1e-16)  # numerical stability
+                loss = -np.sum(ytrue * np.log(yhat))
+                dout = -(ytrue/yhat) + (1-ytrue)/(1-yhat)
+                return dout, loss
+            return loss_func
+            
+        elif function == "fast_cross_entropy":  # simplified cross entropy, to be used with fast_softmax
+            def loss_func(ytrue, yhat):
+                yhat = np.clip(yhat, 1e-16, 1. - 1e-16)
+                loss = -np.sum(ytrue * np.log(yhat))
+                dout = yhat - ytrue
+                return dout, loss
+            return loss_func
+            
         elif function == "mse":
-            erros = loss = np.sum(errors**2)/(errors.size)
-        return errors, loss
+            def loss_func(ytrue, yhat):
+                loss = np.sum(errors**2)/(errors.size)
+                dout = yhat - ytrue
+                return dout, loss
+            return loss_func
+            
+        else:
+            raise ValueError('Invalid loss function')    
     
     def split_data(self, X, y, batch_size, rand=True):
         """
