@@ -37,9 +37,6 @@ class Linear_layer(Layer):
         # initialize moments
         self.m1 = np.zeros(self.weights.shape)
         self.m2 = np.zeros(self.weights.shape)
-        
-        self.parameters = [self.weights]
-        
     
     def forward(self, X, param):
         """

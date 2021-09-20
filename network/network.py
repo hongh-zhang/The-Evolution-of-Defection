@@ -101,8 +101,9 @@ class NeuralNetwork:
             yhat = self.forward(X_batch, param)
             
             # backward
-            dout, batch_loss = self.calc_loss(y_batch, yhat)
+            dout, batch_loss = self.loss_fn(y_batch, yhat)
             error_ls.append(batch_loss)
+            
             self.backprop(dout/batch_size, param)
         
         # record & report
@@ -123,12 +124,9 @@ class NeuralNetwork:
     def validate(self, X_t, y_t, param, loss_func = "mse"):
         param["mode"] = 'test'
         yhat = self.forward(X_t, param)
-        _, test_loss = self.calc_loss(y_t, yhat)
+        _, test_loss = self.loss_fn(y_t, yhat)
         self.test_loss.append((param['epoch'], test_loss))
     
-    # -----
-    # help functions
-    # ----
     def set_loss_func(self, function):
         """Return a function that calculate output loss,
         loss_func :: (ytrue, yhat) -> (dout, loss)"""
@@ -156,9 +154,14 @@ class NeuralNetwork:
         else:
             raise ValueError('Invalid loss function')
             
-        self.calc_loss = loss_func
+        self.loss_fn = loss_func
     
-    def split_data(self, X, y, batch_size, rand=True):
+    # -----
+    # help functions
+    # ----
+    
+    @staticmethod
+    def split_data(X, y, batch_size, rand=True):
         """Shuffle and split training data into random batches."""
         # shuffle
         if rand:
@@ -174,7 +177,10 @@ class NeuralNetwork:
         plt.figure(figsize=(10, 8), dpi=80)
         plt.scatter(*zip(*self.train_loss), c='orange', marker='x', label='train')
         if mode!='both':
-            plt.scatter(*zip(*self.test_loss), c='chartreuse', marker='+', label='test')
+            try:
+                plt.scatter(*zip(*self.test_loss), c='chartreuse', marker='+', label='test')
+            except:
+                pass
         plt.yscale("log")
         plt.legend(loc='upper right')
         plt.show()
@@ -186,10 +192,10 @@ class NeuralNetwork:
             layer.print_parameters()
             i += 1
     
-    def __call__(self, X, mode='asdfghjkl', param=None):
+    def __call__(self, X, **kwargs):
         if X.ndim == 1:
             X = np.expand_dims(X, axis=0)
-        return self.query(X, mode=mode, param=param)
+        return self.query(X, **kwargs)
     
     def reset(self):
         self.train_loss = []
