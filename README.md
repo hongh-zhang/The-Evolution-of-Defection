@@ -24,10 +24,5 @@ See tests/nn_test.ipynb for examples.
 MNIST dataset is too large to upload onto github, please manually place them inside the tests folder if you wish to run the tests.
 
 ### TODO
-- Different input structure
-- Find ways to reduce NNPlayer.learn's variance, if possible
-- Learn defection
 
-- Try implementing policy gradient
-- Try implementing actor critic
-- Build a GPU version for network module
+- Learn defection
