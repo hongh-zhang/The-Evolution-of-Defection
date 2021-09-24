@@ -57,47 +57,53 @@ elu_ = np.vectorize(single_elu_)
 
 # --- CONVOLUTIONS ---
 
-def correlate1(X, K):
-    """1d convolution"""
-    xw = len(X)
-    kw = len(K)
-    ow = len(X) - len(K) + 1
+def correlate1(X, K, stride=1):
+    """1d correlation"""
     
-    if ow >= 1:
-        return np.fromiter((np.sum(X[i:i+kw] * K) for i in range(ow)), dtype=float)
+    ow = len(X) - len(K)
+    assert ow % stride == 0, "Invalid stride"
+    
+    if ow >= 0:
+        return np.correlate(X, K, mode='valid')[::stride]
     else:
-        return correlate1(K, X)
+        return np.correlate(K, X, mode='valid')[::stride]   
 
-def convolve1(X, K):
-    return correlate1(X, np.flip(K))
+def convolve1(X, K, stride=1):
+    return correlate1(X, np.flip(K), stride=stride)
 
 
-# corr2 is seperated from corr1 for efficiency
-def correlate2(X, K):
-    """1d convolution with height (2d)"""
+
+def correlate2(xs, ks, stride=1):
+    """1d correlation with height (2d)"""
+
+    ow = xs.shape[1] - ks.shape[1]
+    assert ow % stride == 0, "Invalid stride"
     
-    xw = X.shape[1]
-    kw = K.shape[1]
-    ow = xw - kw + 1
+    if ow < 0:
+        return correlate2(ks, xs, stride=stride)
     
-    if ow >= 1:
-        return [np.sum(X[:, i:i+kw] * K) for i in range(ow)]
-    else:
-        return correlate2(K, X)  # correlation is communitive
+    # divide into 1d conrrelation
+    out = np.array([np.correlate(x, k, mode='valid')[::stride] for x, k in zip(xs, ks)])
+    
+    # sum into 1d output
+    return np.sum(out, axis=0)
+    
+def convolve2(xs, ks, stride=1):
+    return correlate2(xs, np.flip(ks, axis=1), stride=stride)
 
-def convolve2(X, K):
-    return correlate2(X, np.flip(K, axis=1))
 
 
-def correlate3(XS, KS):
-    """1d convolution with batches & multiple kernels (3d)"""
-    xshape = XS.shape
-    kshape = KS.shape
+def correlate3(xss, kss, stride=1):
+    """1d correlation with height & batch (3d)"""
+    
+    xshape = xss.shape
+    kshape = kss.shape
     
     assert (len(xshape)==3 and len(kshape)==3), "3d input required"
     assert xshape[1] == kshape[1], "kernels not spanning input height"
     
-    return np.array([[correlate2(x, k) for k in KS] for x in XS])
+    # divide into single input and single kernel and pass to correlate2
+    return np.array([[correlate2(xs, ks, stride=stride) for ks in kss] for xs in xss])
 
-def convolve3(XS, KS):
-    return correlate3(XS, np.flip(KS, axis=1))
+def convolve3(xss, kss, stride=1):
+    return correlate3(xss, np.flip(xss, axis=2), stride=stride)

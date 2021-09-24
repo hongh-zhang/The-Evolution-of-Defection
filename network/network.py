@@ -1,4 +1,5 @@
 import numpy as np
+from time import time
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 
@@ -87,9 +88,12 @@ class NeuralNetwork:
             Enable random shuffle or not
             
         """
+        
+        start = time()
+        
         param["mode"] = 'train'
         param["epoch"] += 1
-        batch_size = param.get("batch", 32)
+        batch_size = param.get("batch", 16)
         error_ls = []
         self.set_loss_func(loss_func)
         
@@ -109,7 +113,7 @@ class NeuralNetwork:
         # record & report
         avg_loss = sum(error_ls)/len(error_ls)
         self.train_loss.append((param['epoch'], float(avg_loss)))
-        print(f"Average loss = {avg_loss:.6f}.")
+        print(f"Average loss = {avg_loss:.6f}, elapsed time = {time()-start}.")
     
     def backprop(self, dout, param):
         param['t'] += 1

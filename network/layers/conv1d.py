@@ -12,6 +12,7 @@ class Conv1d_layer(Layer):
         self.ic = in_channels  # height
         self.oc = out_channels  # number of kernels
         self.kw = kernel_wid  # width
+        self.reset()
         
     def reset(self):
         self.kernels = np.random.randn(self.oc, self.ic, self.kw) / np.sqrt(self.oc/2)  # what is the best initialization for kernels?

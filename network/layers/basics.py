@@ -32,7 +32,7 @@ class Linear_layer(Layer):
         self.weights = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
         if self.bias:
             # concat zeros to weights as additional row
-            self.weights = np.concatenate((self.weights, np.ones((1,self.output_nodes))*bias), axis=0)
+            self.weights = np.concatenate((self.weights, np.ones((1,self.output_nodes))*self.bias), axis=0)
         
         # initialize moments
         self.m1 = np.zeros(self.weights.shape)
