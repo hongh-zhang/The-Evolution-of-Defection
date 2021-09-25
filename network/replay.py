@@ -17,6 +17,9 @@ class ReplayMemory():
     def sample(self, n):
         """randomly select n transitions"""
         return sample(self.memory, n)
+    
+    def values(self):
+        return list(self.memory)
 
     def __len__(self):
         return len(self.memory)

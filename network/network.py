@@ -45,26 +45,19 @@ class NeuralNetwork:
             output = layer.forward(output, param)
         return output
     
-    def query(self, X, mode='classification', param=None):
-        """Query the network,
+    def query(self, X, param=None):
+        """Query the network, return argmax(y)
         
         Parameters
         -------------
         X: ndarray
             Inputs
-        
-        mode: str, default='classification'
-            A string indicating running mode. Returns predicted label instead 
-            of raw probability if mode='classification'
-        
         """
-        #print(param)
+
         if not param:
             param = self.dummy_param
         output = self.forward(X, param)
-        if mode == 'classification':
-            output = np.argmax(output, axis=1)
-        return output
+        return np.argmax(output, axis=1)
     
     def train(self, X, y, param, loss_func="mse", rand=True):
         """
@@ -196,10 +189,8 @@ class NeuralNetwork:
             layer.print_parameters()
             i += 1
     
-    def __call__(self, X, **kwargs):
-        if X.ndim == 1:
-            X = np.expand_dims(X, axis=0)
-        return self.query(X, **kwargs)
+    def __call__(self, X, param=None):
+        return self.forward(X, param) if param else self.forward(X, self.dummy_param)
     
     def reset(self):
         self.train_loss = []
