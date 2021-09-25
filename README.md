@@ -3,6 +3,8 @@ A simple deep RL project on iterated prisoner's dilemma by [Harris Zhang](https:
 
 (WIP)
 
+Relevant results will be found inside project.ipynb once it's done.
+
 #
 
 python 3.8+ is recommended for various performance boost.
@@ -17,11 +19,9 @@ This will import the following class objects:
 - BatchNorm_layer
 - Dropout_layer
 - Maxout_layer
+- Conv1d_layer (stride and backward dx not fully implemented yet)
 
 See tests/nn_test.ipynb for examples.
-
-### tests
-MNIST dataset is too large to upload onto github, please manually place them inside the tests folder if you wish to run the tests.
 
 ### TODO
 
