@@ -22,6 +22,7 @@ class Linear_layer(Layer):
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
         self.bias = bias
+        self.with_bias = True
         self.reset()
     
     def reset(self):
@@ -45,8 +46,12 @@ class Linear_layer(Layer):
         (2d array) X: input, in the form of 2d numpy array #of instances * #of attributes
         """
         if self.bias:
-            # concat ones to x as additional column
-            X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
+            if self.with_bias:
+                # concat ones to x as additional column
+                X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
+            else:
+                # concat 0 instead of 1
+                X = np.concatenate((X, np.zeros((X.shape[0], 1))), axis=1)
         
         # calculate output
         output = np.dot(X, self.weights)

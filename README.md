@@ -25,4 +25,5 @@ See tests/nn_test.ipynb for examples.
 
 ### TODO
 
-- Learn defection
+- Learn retaliating defection
+- Learn provocative defection
