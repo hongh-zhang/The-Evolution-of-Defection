@@ -1,3 +1,5 @@
+# replay memory for the nnplayer
+
 from random import sample
 from pickle import dump, load
 from collections import namedtuple, deque

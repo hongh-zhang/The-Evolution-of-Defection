@@ -1,3 +1,5 @@
+# batch normalization & dropout layer
+
 import numpy as np
 from collections import namedtuple
 from network.layers.layer import Layer

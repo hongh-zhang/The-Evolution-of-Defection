@@ -1,3 +1,6 @@
+# this file provide a nnplayer subclass for the axelrod library
+# it organize states and replay memory to cooperate with DQN
+
 import random
 import numpy as np
 import axelrod as axl
@@ -97,7 +100,7 @@ class NNplayer(axl.Player):
         self.memory.push(s, play, s_, r)
         
     def train(self, epoch, param):
-        
+        param['t'] = 1
         length = len(self.memory)
         for _ in range(epoch):
             # organize data
