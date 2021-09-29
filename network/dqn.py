@@ -2,6 +2,7 @@
 
 import numpy as np
 from copy import deepcopy
+import matplotlib.pyplot as plt
 from network import NeuralNetwork
 from collections import namedtuple
 
@@ -15,7 +16,8 @@ class DQN():
         # define networks
         self.policy_net = NeuralNetwork(layers)
         self.target_net = deepcopy(self.policy_net)
-        self.loss = None
+        self.loss = np.zeros(self.policy_net.layers[-1].output_nodes)
+        self.loss_ls = []
     
     def query(self, state):
         """make decision from given state"""
@@ -41,13 +43,13 @@ class DQN():
         # train
         for s, s_, at, r in zip(ss, ss_, ats, rs):
             
-            # value of current state
+            # estimated value of current state
             Q_values = self.policy_net(s, param=param) * at
             
-            # value of next state
+            # estimated value of next state
             Q_values_ = np.max(self.target_net(s_), axis=1, keepdims=True)
             
-            # expected value of current state
+            # expected value of current state = E(next) + reward
             E_values = gamma*Q_values_ + r
             
             # hard code the value of last state to 0.0
@@ -59,7 +61,19 @@ class DQN():
             self.policy_net.backprop(loss, param)
             
             # track training loss
-            if not self.loss:
-                self.loss = np.mean(np.max(np.abs(loss),axis=1))
-            else:
-                self.loss = 0.9*self.loss + 0.1*np.mean(np.max(np.abs(loss),axis=1))
+            loss = np.sum(np.abs(loss),axis=0) / np.clip(np.sum(loss!=0, axis=0), 1, None)
+            self.loss = 0.9*self.loss + 0.1*loss
+        self.loss_ls.append((param['epoch'], self.loss))
+        
+    def plot(self, min_ran=0, max_ran=-1):
+        
+        max_ran = max_ran if max_ran!=-1 else len(self.loss_ls)
+        
+        plt.figure(figsize=(10, 8), dpi=80)
+        plt.scatter(*zip(*[(i[0], i[1][0]) for i in self.loss_ls[min_ran:max_ran]]), c='chartreuse', marker='x', label='Cooperation')
+        plt.scatter(*zip(*[(i[0], i[1][1]) for i in self.loss_ls[min_ran:max_ran]]), c='orange', marker='+', label='Defection')
+        #plt.yscale("log")
+        plt.xlabel('Epochs')
+        plt.ylabel('MSE Loss')
+        plt.legend(loc='upper right')
+        plt.show()

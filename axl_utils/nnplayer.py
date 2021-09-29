@@ -56,7 +56,7 @@ class NNplayer(axl.Player):
     
     decision = (axl.Action.C, axl.Action.D)
     
-    def __init__(self, network, memory, state, greedy=0.2, gamma=0.999):
+    def __init__(self, network, memory, state, greedy=0.2, gamma=0.999, mode="dense", N=-1):
         super().__init__()
         
         self.network = network
@@ -68,8 +68,13 @@ class NNplayer(axl.Player):
         
         self.verbosity = False
         
+        self.mode = 1 if mode=="dense" else 0
+        self.N = -1
+        self.reset()
+        
     def reset(self):
         self.state.reset()
+        self.reward = 0
         
     def strategy(self, opponent):
         """Make decision"""
@@ -86,6 +91,7 @@ class NNplayer(axl.Player):
             return self.decision[np.argmax(d)]
     
     # overwrite update_history to update self state
+    # this function is automatically called by axelrod library
     def update_history(self, *args):
         self.history.append(*args)
         self.update_state(*args)
@@ -95,9 +101,22 @@ class NNplayer(axl.Player):
         s  = self.state.values()
         s_ = self.state.push(play, coplay)
         
-        # hardcoding reward as usual
-        r  = axl.interaction_utils.compute_scores([(play, coplay)])[0][0] if s[0,0,1]==-1 else np.NaN
-        self.memory.push(s, play, s_, r)
+        # reward
+        r  = axl.interaction_utils.compute_scores([(play, coplay)])[0][0]
+        
+        # dense reward
+        if self.mode:
+            r  = r if s[0,0,1]==-1 else np.NaN  # set last turn reward to NaN
+            self.memory.push(s, play, s_, r)
+        
+        # sparse reward
+        else:
+            if s[0,0,1]==self.N:
+                self.memory.push(s, play, s_, 0)
+                self.reward += r
+            else:
+                self.memory.push(s, play, s_, r+self.reward)
+                self.reward = 0
         
     def train(self, epoch, param):
         param['t'] = 1
@@ -113,6 +132,9 @@ class NNplayer(axl.Player):
             # pass to network
             self.network.learn((ss, ss_, ats, rs), param, self.gamma)
         self.network.update_target()
+    
+    def plot(self, *args):
+        self.network.plot(*args)
         
     # test mode using "with" statement
     def __enter__(self, *args):
