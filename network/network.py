@@ -118,7 +118,7 @@ class NeuralNetwork:
                 dout = dout / magnitude * clip
             dout = layer.backward(dout, param)
     
-    def validate(self, X_t, y_t, param, loss_func = "mse"):
+    def validate(self, X_t, y_t, param):
         param["mode"] = 'test'
         yhat = self.forward(X_t, param)
         _, test_loss = self.loss_fn(y_t, yhat)

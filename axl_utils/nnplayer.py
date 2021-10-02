@@ -4,6 +4,7 @@
 import random
 import numpy as np
 import axelrod as axl
+from time import time
 from collections import deque, namedtuple
 
 Transition = namedtuple('Transition', 
@@ -131,10 +132,12 @@ class NNplayer(axl.Player):
             
             # pass to network
             self.network.learn((ss, ss_, ats, rs), param, self.gamma)
+        
         self.network.update_target()
+        self.loss = self.network.loss
     
-    def plot(self, *args):
-        self.network.plot(*args)
+    def plot(self, **kwargs):
+        self.network.plot(**kwargs)
         
     # test mode using "with" statement
     def __enter__(self, *args):
@@ -145,3 +148,12 @@ class NNplayer(axl.Player):
     def __exit__(self, *args):
         self.verbosity = False
         self.greedy = self.temp
+    
+    
+    
+# function handling training
+def train(nnplayer, epoch, param):
+    for _ in range(epoch):
+        start = time()
+        nnplayer.train(60, param)
+        print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')

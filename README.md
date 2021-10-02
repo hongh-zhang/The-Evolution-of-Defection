@@ -2,8 +2,13 @@
 A simple deep RL project on iterated prisoner's dilemma by [Harris Zhang](https://github.com/HarrrrisZhang).
 
 (WIP)
+The project is divided into 3 stages:
 
-Relevant results will be found inside project.ipynb once it's done.
+Stage 1: What is DQN and how do they learn? (learn IPD against TitForTat)
+
+Stage 2: Can they learn the optimal strategy (TitForTat)? (play against multiple opponents)
+
+Stage 3: Can ANNs learn from each other? (Adversarial training)
 
 #
 

@@ -18,6 +18,7 @@ class DQN():
         self.target_net = deepcopy(self.policy_net)
         self.loss = np.zeros(self.policy_net.layers[-1].output_nodes)
         self.loss_ls = []
+        self.epoch = 0
     
     def query(self, state):
         """make decision from given state"""
@@ -34,6 +35,7 @@ class DQN():
         sections = len(data[0]) // batch_size
         
         param['epoch'] += 1
+        self.epoch += 1
         param['mode'] = 'train'
         self.policy_net.set_loss_func('mse')
 
@@ -43,13 +45,13 @@ class DQN():
         # train
         for s, s_, at, r in zip(ss, ss_, ats, rs):
             
-            # estimated value of current state
+            # estimate value of current state
             Q_values = self.policy_net(s, param=param) * at
             
-            # estimated value of next state
+            # estimate value of next state
             Q_values_ = np.max(self.target_net(s_), axis=1, keepdims=True)
             
-            # expected value of current state = E(next) + reward
+            # expected value of current state = discounted E(next) + reward
             E_values = gamma*Q_values_ + r
             
             # hard code the value of last state to 0.0
@@ -63,7 +65,7 @@ class DQN():
             # track training loss
             loss = np.sum(np.abs(loss),axis=0) / np.clip(np.sum(loss!=0, axis=0), 1, None)
             self.loss = 0.9*self.loss + 0.1*loss
-        self.loss_ls.append((param['epoch'], self.loss))
+        self.loss_ls.append((self.epoch, self.loss))
         
     def plot(self, min_ran=0, max_ran=-1):
         
@@ -77,3 +79,7 @@ class DQN():
         plt.ylabel('MSE Loss')
         plt.legend(loc='upper right')
         plt.show()
+        
+    def reset(self):
+        self.policy_net.reset()
+        self.update_target()
