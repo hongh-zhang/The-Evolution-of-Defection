@@ -156,4 +156,4 @@ def train(nnplayer, epoch, param):
     for _ in range(epoch):
         start = time()
         nnplayer.train(60, param)
-        print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')
+        #print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')

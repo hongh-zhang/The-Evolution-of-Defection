@@ -49,13 +49,14 @@ class Maxout_layer(Layer):
         
         y1 = np.dot(X, self.w1)
         y2 = np.dot(X, self.w2)
-        out = np.maximum(y1, y2)
-        pos = (y1>y2)  # record which weight is responsible for each entry
+        pos1 = (y1>y2)
+        pos2 = np.logical_not(pos1)
+        out = y1 * pos1 + y2 * pos2
         
         # record inputs & outputs for weight update later
         self.input = X
-        self.pos1 = pos
-        self.pos2 = np.logical_not(pos)
+        self.pos1 = pos1
+        self.pos2 = pos2
         
         return out
     
@@ -78,11 +79,9 @@ class Maxout_layer(Layer):
         # update
         dw1 = np.dot(self.input.T, dout1)
         dw2 = np.dot(self.input.T, dout2)
-        
-        
-        dw1, self.m11, self.m12 = self.optimize(self.delta(dw1, self.m11, self.m12), param)
-        dw2, self.m21, self.m22 = self.optimize(self.delta(dw2, self.m21, self.m22), param)
-        
+
+        dw1, self.m11, self.m12 = self.optimizer(dw1, self.m11, self.m12, param)
+        dw2, self.m21, self.m22 = self.optimizer(dw2, self.m21, self.m22, param)
         
         # decay
         self.w1 = (1 - lr*decay) * self.w1 - dw1

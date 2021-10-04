@@ -84,7 +84,7 @@ class Linear_layer(Layer):
         
         # update self
         dw = np.dot(self.input.T, dout)
-        dw, self.m1, self.m2 = self.optimize(self.delta(dw, self.m1, self.m2), param)
+        dw, self.m1, self.m2 = self.optimizer(dw, self.m1, self.m2, param)
         self.weights = (1 - lr*decay) * self.weights - dw
         
         return dx

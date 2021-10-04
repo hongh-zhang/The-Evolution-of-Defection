@@ -46,7 +46,7 @@ class NeuralNetwork:
         return output
     
     def query(self, X, param=None):
-        """Query the network, return argmax(y)
+        """Query for classification,
         
         Parameters
         -------------
@@ -58,6 +58,10 @@ class NeuralNetwork:
             param = self.dummy_param
         output = self.forward(X, param)
         return np.argmax(output, axis=1)
+    
+    def __call__(self, X, param=None):
+        """Query for regression"""
+        return self.forward(X, param) if param else self.forward(X, self.dummy_param)
     
     def train(self, X, y, param, loss_func="mse", rand=True):
         """
@@ -83,12 +87,14 @@ class NeuralNetwork:
         """
         
         start = time()
-        
-        param["mode"] = 'train'
-        param["epoch"] += 1
-        batch_size = param.get("batch", 16)
         error_ls = []
+        
+        param["epoch"] += 1
+        param["mode"] = 'train'
+        batch_size = param.get("batch", 16)
+        
         self.set_loss_func(loss_func)
+        [layer.set_optimizer(param) for layer in self.layers]
         
         # get random batches then iterate
         X_split, y_split = self.split_data(X, y, batch_size, rand=rand)
@@ -106,7 +112,7 @@ class NeuralNetwork:
         # record & report
         avg_loss = sum(error_ls)/len(error_ls)
         self.train_loss.append((param['epoch'], float(avg_loss)))
-        print(f"Average loss = {avg_loss:.6f}, elapsed time = {time()-start}.")
+        print(f"Average loss = {avg_loss:.6f}, elapsed time = {time()-start:.2f}.")
     
     def backprop(self, dout, param):
         param['t'] += 1
@@ -188,9 +194,6 @@ class NeuralNetwork:
             print(f"--{i}--")
             layer.print_parameters()
             i += 1
-    
-    def __call__(self, X, param=None):
-        return self.forward(X, param) if param else self.forward(X, self.dummy_param)
     
     def reset(self):
         self.train_loss = []

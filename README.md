@@ -25,7 +25,7 @@ This will import the following class objects:
 - BatchNorm_layer
 - Dropout_layer
 - Maxout_layer
-- Conv1d_layer (stride and backward dx not fully implemented yet)
+- Conv1d_layer (it works, buy every pixel in the same kernel gets a similar update, not sure if it is supposed to be so)
 
 See examples/neural_network.ipynb for details.
 

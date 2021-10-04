@@ -6,32 +6,47 @@ from network.layers.functions import *
 
 class Conv1d_layer(Layer):
     
-    def __init__(self, in_channels, out_channels, kernel_wid):
+    def __init__(self, in_channels, out_channels, in_width, kernel_width, stride=1, bias=0):
         
         self.type = 'conv1d'
         self.ic = in_channels  # height
         self.oc = out_channels  # number of kernels
-        self.kw = kernel_wid  # width
+        self.iw = in_width
+        self.kw = kernel_width  # width
+        self.ow = int((self.iw - self.kw) / stride + 1)
+        self.bias = bias
+        self.stride = 1
         self.reset()
         
     def reset(self):
         self.kernels = np.random.randn(self.oc, self.ic, self.kw) / np.sqrt(self.oc/2)  # what is the best initialization for kernels?
         # oc is used here since it's analogous to input_nodes in linear layers (i.e., the number of units in a layer)
+        
+        self.m1 = np.zeros(self.kernels.shape)
+        self.m2 = np.zeros(self.kernels.shape)
+        
+        self.bias = np.ones((self.oc, self.ow)) * self.bias
+        self.db1 = np.zeros(self.bias.shape)
+        self.db2 = np.zeros(self.bias.shape)
     
     def forward(self, X, param):
-        
         self.inputs = X
-        return correlate3(X, self.kernels)
+        return correlate3(X, self.kernels) + self.bias
     
     def backward(self, douts, param):
+        
+        assert douts[0].shape == (self.oc, self.ow)
         
         lr = param.get('lr', 1e-5)
         clip = param.get('clip', 1.0)       
         
+        # update bias
+        db = np.sum(douts, axis=0)
+        
         # calculate dx to pass to next layer
         dxs = []
         for dy in douts:
-            dx = [[convolve1(d, row) for row in k] for d, k in zip(dy, self.kernels)]
+            dx = [[convolve1(d, k) for k in ks] for d, ks in zip(dy, self.kernels)]
             dx = np.sum(np.array(dx), axis=0)
             dxs.append(dx)
         
@@ -45,19 +60,15 @@ class Conv1d_layer(Layer):
         num = len(self.kernels)  # number of kernels
         
         # sum all dw to each kernel
-        dks = []
-        for i in range(num):
-            dks.append(np.sum(dws[i::num, :, :], axis=0))
+        dks = np.array([np.sum(dws[i::num, :, :], axis=0) for i in range(num)])
         
         # update
-        for i in range(num):
-            dk = dks[i] * lr
-            magnitude = np.linalg.norm(dk)
-            if magnitude > clip:
-                dk = dk / magnitude * clip
-            self.kernels[i] -= dk
+        dks, self.m1, self.m2  = self.optimizer(dks, self.m1, self.m2, param)
+        db, self.db1, self.db2 = self.optimizer(db, self.db1, self.db2, param)
+        self.kernels -= dks
+        self.bias -= db
         
-        return dxs
+        return np.array(dxs)
         
 
 class Flatten_layer(Layer):
