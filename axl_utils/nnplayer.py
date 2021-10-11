@@ -63,11 +63,8 @@ class NNplayer(axl.Player):
         self.network = network
         self.memory  = memory
         self.state   = state
-        
-        self.greedy  = greedy
+
         self.gamma   = gamma
-        
-        self.verbosity = False
         
         self.mode = 1 if mode=="dense" else 0
         self.N = -1
@@ -78,18 +75,9 @@ class NNplayer(axl.Player):
         self.reward = 0
         
     def strategy(self, opponent):
-        """Make decision"""
-        
-        # make random choice to explore
-        if random.random() < self.greedy:
-            return random.choice(self.decision)
-        
-        # or query the network to exploit
-        else:
-            d = self.network.query(self.state.values())
-            if self.verbosity:
-                print(d)
-            return self.decision[np.argmax(d)]
+        """Query the network to make decision"""
+        idx = self.network.query(self.state.values())
+        return self.decision[idx]
     
     # overwrite update_history to update self state
     # this function is automatically called by axelrod library
@@ -138,16 +126,13 @@ class NNplayer(axl.Player):
     
     def plot(self, **kwargs):
         self.network.plot(**kwargs)
-        
+
     # test mode using "with" statement
     def __enter__(self, *args):
-        self.verbosity = True
-        self.temp = self.greedy
-        self.greedy = 0.0
+        self.network.test_mode(True)
     
     def __exit__(self, *args):
-        self.verbosity = False
-        self.greedy = self.temp
+        self.network.test_mode(False)
     
     
     

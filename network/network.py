@@ -159,6 +159,9 @@ class NeuralNetwork:
             
         self.loss_fn = loss_func
     
+    def set_optimizer(self, param):
+        for l in self.layers:
+            l.set_optimizer(param)
     # -----
     # help functions
     # ----

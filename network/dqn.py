@@ -11,7 +11,7 @@ Transition = namedtuple('Transition',
 
 class DQN():
     
-    def __init__(self, layers):
+    def __init__(self, layers, greedy=0.1):
         
         # define networks
         self.policy_net = NeuralNetwork(layers)
@@ -19,11 +19,25 @@ class DQN():
         self.loss = np.zeros(self.policy_net.layers[-1].output_nodes)
         self.loss_ls = []
         self.epoch = 0
+        
+        self.greedy = greedy
+        self.verbosity = False
     
     def query(self, state):
-        """make decision from given state"""
-        d = self.policy_net(state)
-        return d
+        """Calculate Q value for each action, or make aa random choice"""
+        
+        # make random choice to explore
+        if random.random() < self.greedy:
+            if self.verbosity:
+                print('randomed')
+            return random.choice(self.decision)
+        
+        # or query the network to exploit
+        else:
+            qvalues = self.policy_net(state)
+            if self.verbosity:
+                print(qvalues)
+            return np.argmax(qvalues)
     
     def update_target(self):
         self.target_net = deepcopy(self.policy_net)
@@ -83,3 +97,12 @@ class DQN():
     def reset(self):
         self.policy_net.reset()
         self.update_target()
+        
+    def test_mode(self, on):
+        if on:
+            self.verbosity = True
+            self.temp = self.greedy
+            self.greedy = 0
+        else:
+            self.verbosity = False
+            self.greedy = self.temp
