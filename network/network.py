@@ -36,7 +36,7 @@ class NeuralNetwork:
         
         self.dummy_param = {"lr": None, 'batch': None, "momentum": None, "mode": "test", 
                             "eps": None, "beta":None, "epoch": None, 'method': None, 
-                            't': None, 'clip': None, 'decay': None}
+                            't': None, 'clip': None, 'decay': None, "loss_fn":"mse"}
     
     def forward(self, X, param):
         """Forward signal"""
@@ -63,7 +63,7 @@ class NeuralNetwork:
         """Query for regression"""
         return self.forward(X, param) if param else self.forward(X, self.dummy_param)
     
-    def train(self, X, y, param, loss_func="mse", rand=True):
+    def train(self, X, y, param, rand=True):
         """
         Train the ANN with given dataset
         
@@ -93,8 +93,7 @@ class NeuralNetwork:
         param["mode"] = 'train'
         batch_size = param.get("batch", 16)
         
-        self.set_loss_func(loss_func)
-        [layer.set_optimizer(param) for layer in self.layers]
+        self.set_up(param)
         
         # get random batches then iterate
         X_split, y_split = self.split_data(X, y, batch_size, rand=rand)
@@ -115,6 +114,17 @@ class NeuralNetwork:
         print(f"Average loss = {avg_loss:.6f}, elapsed time = {time()-start:.2f}.")
     
     def backprop(self, dout, param):
+        """Backpropagate errors,
+        
+        Parameters
+        ----------
+        dout : ndarray
+            output error, produced by loss_fn
+            
+        param : dict
+            hyperparameters
+        """
+        
         param['t'] += 1
         clip = param.get('clip', 1.0)
         for layer in self.layers[::-1]:
@@ -122,18 +132,33 @@ class NeuralNetwork:
             magnitude = np.linalg.norm(dout)
             if magnitude > clip:
                 dout = dout / magnitude * clip
+            # pass to layer and compute the error to the next layer
             dout = layer.backward(dout, param)
     
     def validate(self, X_t, y_t, param):
+        """Test performaance against validation set"""
         param["mode"] = 'test'
         yhat = self.forward(X_t, param)
         _, test_loss = self.loss_fn(y_t, yhat)
         self.test_loss.append((param['epoch'], test_loss))
     
-    def set_loss_func(self, function):
+    
+    def set_up(self, param):
+        """Set up optimizer and loss function."""
+        self.set_optimizer(param)
+        self.set_loss_func(param)
+    
+    def set_optimizer(self, param):
+        """Set optimizer for each layer, specified in param dict"""
+        for l in self.layers:
+            l.set_optimizer(param)
+            
+    def set_loss_func(self, param):
         """Return a function that calculate output loss,
-        loss_func :: (ytrue, yhat) -> (dout, loss)"""
-
+        loss_fn :: (ytrue, yhat) -> (dout, loss)"""
+        
+        function = param.get("loss_fn", "mse").lower()
+        
         if function == "cross_entropy":
             def loss_func(ytrue, yhat):
                 yhat = np.clip(yhat, 1e-16, 1. - 1e-16)  # numerical stability
@@ -158,10 +183,7 @@ class NeuralNetwork:
             raise ValueError('Invalid loss function')
             
         self.loss_fn = loss_func
-    
-    def set_optimizer(self, param):
-        for l in self.layers:
-            l.set_optimizer(param)
+
     # -----
     # help functions
     # ----
@@ -192,6 +214,7 @@ class NeuralNetwork:
         plt.show()
     
     def print_parameters(self):
+        """Print out parameters of the layers"""
         i = 0
         for layer in self.layers:
             print(f"--{i}--")
@@ -199,6 +222,7 @@ class NeuralNetwork:
             i += 1
     
     def reset(self):
+        """Re-initialize the parameters"""
         self.train_loss = []
         self.test_loss = []
         for layer in self.layers:

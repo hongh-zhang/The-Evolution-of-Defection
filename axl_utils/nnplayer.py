@@ -57,74 +57,81 @@ class NNplayer(axl.Player):
     
     decision = (axl.Action.C, axl.Action.D)
     
-    def __init__(self, network, memory, state, greedy=0.2, gamma=0.999, mode="dense", N=-1):
+    def __init__(self, network, state, greedy=0.2, mode="dense", N=-1, learner="off"):
         super().__init__()
         
         self.network = network
-        self.memory  = memory
         self.state   = state
-
-        self.gamma   = gamma
         
-        self.mode = 1 if mode=="dense" else 0
+        self.mode = 1 if mode=="dense" else 0  # dense reward = 1, sparse reward = 0
+        self.learner = 1 if learner=="off" else 0  # off-policy learner = 1, on-policy = 0
         self.N = -1
+        self.transitions = []
         self.reset()
-        
+    
+    # the following 3 functions overload the orginal implementation in axelrod library
+    # they are automatically called by axl during each game
     def reset(self):
-        self.state.reset()
+        """Reset the states to start a new game"""
         self.reward = 0
+        self.state.reset()
+        self._history = axl.history.History()
+        
+        # push buffer into memory then reset it
+        if self.learner:
+            self.push_transitions()
+        self.transitions = []
         
     def strategy(self, opponent):
-        """Query the network to make decision"""
+        """Query the network (each turn) to make decision"""
         idx = self.network.query(self.state.values())
         return self.decision[idx]
     
-    # overwrite update_history to update self state
-    # this function is automatically called by axelrod library
+    # overwrite update_history to update our state
     def update_history(self, *args):
         self.history.append(*args)
         self.update_state(*args)
+    # --------------------------------------------------------------------------------
         
     def update_state(self, play, coplay):
-        """update current game state & record transition into replay memory"""
+        """Update current game state & record transition into replay memory"""
         s  = self.state.values()
         s_ = self.state.push(play, coplay)
         
-        # reward
+        # compute reward
         r  = axl.interaction_utils.compute_scores([(play, coplay)])[0][0]
+        
+        # rewrite action
+        action = [True, False] if play==axl.Action.C else [False, True]
         
         # dense reward
         if self.mode:
             r  = r if s[0,0,1]==-1 else np.NaN  # set last turn reward to NaN
-            self.memory.push(s, play, s_, r)
+            transition = (s, action, s_, r)
         
         # sparse reward
         else:
-            if s[0,0,1]==self.N:
-                self.memory.push(s, play, s_, 0)
+            if s[0,0,1]==self.N:  # not last turn
+                transition = (s, action, s_, 0)
                 self.reward += r
-            else:
-                self.memory.push(s, play, s_, r+self.reward)
+            else:                 # last turn
+                transition = (s, action, s_, r+self.reward)
                 self.reward = 0
         
-    def train(self, epoch, param):
-        param['t'] = 1
-        length = len(self.memory)
-        for _ in range(epoch):
-            # organize data
-            ts = Transition(*zip(*self.memory.sample(length)))
-            ss  = np.vstack(ts.state)
-            ss_ = np.vstack(ts.next_state)
-            ats = np.array([[True, False] if a==axl.Action.C else [False, True] for a in ts.action])
-            rs  = np.array(ts.reward, ndmin=2).T
-            
-            # pass to network
-            self.network.learn((ss, ss_, ats, rs), param, self.gamma)
+        # buffer the transition for on-policy learners (DQN)
+        self.transitions.append(transition)
         
-        self.network.update_target()
-        self.loss = self.network.loss
+    def push_transitions(self):
+        """Push all the buffered transitions into the network's memory"""
+        for t in self.transitions:
+            self.network.push(t)
+        self.transitions = []
+    
+    def train(self, *args):
+        self.network.train(*args)
     
     def plot(self, **kwargs):
+        """Let the network plot its training loss"""
         self.network.plot(**kwargs)
 
     # test mode using "with" statement
@@ -134,11 +141,14 @@ class NNplayer(axl.Player):
     def __exit__(self, *args):
         self.network.test_mode(False)
     
+    def set_greedy(self, value):
+        self.network.greedy = value
     
     
 # function handling training
-def train(nnplayer, epoch, param):
+def train(nnplayer, epoch, param, show=False):
     for _ in range(epoch):
         start = time()
         nnplayer.train(60, param)
-        #print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')
+        if show:
+            print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')

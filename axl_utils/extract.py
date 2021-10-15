@@ -1,6 +1,11 @@
 # functions to extract replay experience, to be used with off-policy algorithm like DQN
 """DEPRECATED as nnplayer now records memory while playing"""
 
+import numpy as np
+import axelrod as axl
+from axl_utils.nnplayer import State
+
+GAME_LEN = 20 + 1
 
 def extract(game, memory, depth=GAME_LEN):
     """
@@ -17,16 +22,16 @@ def extract(game, memory, depth=GAME_LEN):
     while True:
         a_, r_ = next(iterator)
         s_ = state.push(*a_)
-
-        memory.push(s, a_[0], s_, r_[0])
+        a_ = [True, False] if a_[0]==axl.Action.C else [False, True]
+        memory.push(s, a_, s_, r_[0])
         s, a, r = (s_, a_, r_)
 
         # hardcoding the last state
         if s[0,0,1] != -1:
             a_, r_ = next(iterator)
             s_ = state.push(*a_)
-
-            memory.push(s, a_[0], s_, np.NaN)
+            a_ = [True, False] if a_[0]==axl.Action.C else [False, True]
+            memory.push(s, a_, s_, np.NaN)
             break
             
 # memory = ReplayMemory(1000)
