@@ -68,9 +68,13 @@ class Linear_layer(Layer):
         Calls self.update to update weights,
         Returns this layer's error for the preceding error to propogate
         
-        Arguments:
-        (2d array) dout: error from the superior layer,
-        (dict) param
+        Parameters
+        ----------
+        dout : ndarray
+            error from the deeper layer
+            
+        param : dict
+            hyperparameters
         """
         
         lr = param.get("lr", 1e-3)
@@ -84,10 +88,12 @@ class Linear_layer(Layer):
         
         # update self
         dw = np.dot(self.input.T, dout)
-        dw, self.m1, self.m2 = self.optimizer(dw, self.m1, self.m2, param)
-        self.weights = (1 - lr*decay) * self.weights - dw
+        self.weights, self.m1, self.m2 = self.optimizer(self.weights, dw, self.m1, self.m2, param)
         
         return dx
+    
+    def sum_weights(self):
+        return np.sum(np.square(self.weights))
     
 
     

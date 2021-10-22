@@ -21,8 +21,35 @@ class Layer:
         return dout
     
     def set_optimizer(self, param):
-        """Set the layer's optimizer to one of ['adam', 'momentum', 'sgd'],
-           optimizer will be a curried function used in backprop"""
+        """
+        Set the layer's optimizer+regularizer, (calling it optimizer for short)
+        
+        optimizer :: (w, dw, m1, m2, param) -> (w, m1, m2)
+           
+        Parameters
+        ----------
+        param : dict
+            hyperparameters, should contain
+            
+            optimizer : string
+                name for the optimizer, one of ['adam', 'momentum', 'sgd']
+            
+            lr : float
+                learning rate
+            
+            batch : float
+                batch size
+            
+            momentum : float
+                momentum when using the momentum optimizer
+            
+            beta : tuple (float, float)
+                beta1 & beta2 when using the adam optimizer
+            
+            regularizer : tuple (string, float)
+                name for regularizer, one of ['l1', 'l2'] + decay/lambda hyperparameter
+                inside a tuple
+        """
         
         optimizer = param.get('optimizer', 'adam')
         lr = param.get('lr', 1e-3)
@@ -31,7 +58,6 @@ class Layer:
         momentum = param.get('momentum', 0.9)
         beta1, beta2 = param.get('beta', (0.9, 0.999))
         
-        # Adam
         if optimizer.lower() == 'adam':
             def optimizer(dw, m1, m2, param):
                 t = param.get('t', 1)
@@ -39,23 +65,44 @@ class Layer:
                 m2 = beta2 * m2 + (1 - beta2) * np.square(dw)
                 u1 = m1 / (1 - beta1 ** t)
                 u2 = m2 / (1 - beta2 ** t)
-                return (lr * u1 / (np.sqrt(u2) + eps)), m1, m2
+                return u1 / (np.sqrt(u2) + eps), m1, m2
 
-        # Momentum
         elif optimizer.lower() == 'momentum':
             def optimizer(dw, m1, m2, param):
                 m1 = momentum * m1 + (1-momentum) * dw
-                return (lr * m1), m1, m2
+                return m1, m1, m2
 
-        # SGD
         elif optimizer.lower() == 'sgd':
             def optimizer(dw, m1, m2, param):
-                return (lr * dw), m1, m2
+                return dw, m1, m2
         
         else:
             raise ValueError("Invalid optimizer")
             
-        self.optimizer = optimizer
+        # decorate regularizer to optimizers
+        regularizer = param.get("regularizer", None)
+        if regularizer:    
+            method, decay = regularizer
+            
+            if method.lower() == 'l1':
+                def optimize(w, dw, m1, m2, param):
+                    dw, m1, m2 = optimizer(dw, m1, m2, param)
+                    return (1 - lr*decay) * w - lr*dw, m1, m2
+        
+            elif method.lower() == 'l2':
+                def optimize(w, dw, m1, m2, param):
+                    dw, m1, m2 = optimizer(dw, m1, m2, param)
+                    return w - lr * (dw - (decay/(2*batch)*w)), m1, m2
+            
+            else:
+                raise ValueError("Invalid regularizer")
+        
+        else:
+            def optimize(w, dw, m1, m2, param):
+                dw, m1, m2 = optimizer(dw, m1, m2, param)
+                return w - lr * dw, m1, m2
+                
+        self.optimizer = optimize
     
 #     Deprecated implementation for backup
 #     @staticmethod
@@ -107,3 +154,8 @@ class Layer:
     def print_parameters(self):
         print(f"Printing {self.type} layer:")
         pprint(vars(self))
+        
+    # function to calculate l2 cost
+    # could be overwritten by layers with weights
+    def sum_weights(self):
+        return 0

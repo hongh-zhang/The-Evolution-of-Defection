@@ -1,4 +1,5 @@
 # file for 1d convolutional layers, contains Conv1d_layer & Flatten_layer
+# very poorly optimized... didn't get to use this in the actual project
 
 import numpy as np
 from network.layers.layer import Layer

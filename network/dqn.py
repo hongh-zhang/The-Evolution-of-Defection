@@ -1,18 +1,84 @@
 # deep q learner
+# design adapted from
+# https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
 import gc
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 from copy import deepcopy
+from pickle import dump, load
+import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
-from collections import namedtuple
-
+from collections import namedtuple, deque
 
 from network import NeuralNetwork
 
 Transition = namedtuple('Transition', 
                         ('state', 'action', 'next_state', 'reward'))
+
+
+
+class ReplayMemory():
+    """A memory for recording Transition tuples, use a queue (deque) to
+    control memory depth and throw away outdated records."""
+    
+    
+    def __init__(self, capacity):
+        self.memory = deque([], maxlen=capacity)
+
+    def push(self, *args):
+        """Push single transition into memory, 
+        arguments will be automatically cast into Transition tuple
+        
+        Parameters
+        ----------
+        state : State object
+            numeric representation of current state (see axl_utils/nnplayer.py)
+        
+        action : axl.Action
+            action taken
+        
+        next_state : State object
+            numeric representation of the next state
+        
+        reward : Num
+            immediate reward from the environment
+
+        """
+        self.memory.append(Transition(*args))
+
+    def sample(self, n):
+        """Randomly select n transitions"""
+        return random.sample(self.memory, n)
+    
+    def values(self):
+        """Return all values in the ReplayMemory, in list"""
+        return list(self.memory)
+
+    def __len__(self):
+        return len(self.memory)
+    
+    def __repr__(self):
+        if len(self) >= 100:
+            out = list(self.memory)[:100]
+        else:
+            out = self.memory
+        return str(out).replace("), ", "),\n")
+    
+    def save(self, path):
+        with open(path, "wb") as file:
+            dump(self, file)
+    
+    def load(self, path, mode='overwrite'):
+        with open(path, "rb") as file:
+            if mode == 'overwrite':
+                self = load(file)
+            elif mode == 'add':
+                for i in load(file).memory:
+                    self.memory.append(i)
+
+
+
 
 class DQN():
     
@@ -154,31 +220,49 @@ class DQN():
         # train
         for s, s_, at, r in zip(ss, ss_, ats, rs):
             
+            # (1)
             # estimate value of current state
             Q_values = self.policy_net(s, param=param) * at
             
+            # (2)
             # estimate value of next state
             Q_values_ = np.max(self.target_net(s_), axis=1, keepdims=True)
             
-            # expected value of current state = discounted E(next) + reward
+            # (3)
+            # (the regression target)
+            # expected value of current state = discounted E(next) + immediate reward
             E_values = self.gamma*Q_values_ + r
             
             # hard code the value of last state to 0.0
             np.nan_to_num(E_values, copy=False, nan=0.0)
-            
+
+            # (4)
             # feedback
+            # backpropagate the error between (3) - (1)
             loss, _ = self.policy_net.loss_fn(E_values, Q_values)
-            loss = loss * at  # relocate loss to action taken
+            loss = loss * at  # relocate loss to the action taken, only
             self.policy_net.backprop(loss, param)
             
             # track training loss
             loss = np.sum(np.abs(loss),axis=0) / np.clip(np.sum(loss!=0, axis=0), 1, None)
             self.loss = 0.9*self.loss + 0.1*loss
+        
         self.loss_ls.append((self.epoch, self.loss))
         
         
-    def train(self, epochs, param):
+    def train(self, epochs, param, loss_targ=None):
+        """
+        Organize raw data from ReplayMemory then pass them to the learn function, 
+        repeatedly for {epoch} iterations,
+        after the learning finished, update target network to finish this cycle of training.
+        
+        
+        (optional) loss_targ : float
+            minimum percentage in loss before terminate one iteration
+        """
+        
         param['t'] = 1
+        temp_loss = deque([], maxlen=4)
         
         # organize data
         ts = Transition(*zip(*self.memory.values()))
@@ -191,11 +275,24 @@ class DQN():
         
         #print(ss[:10], ss_[:10], ats[:10], rs[:10])
         
-        for _ in range(epochs):
+        for i in range(epochs):
             
             ss, ss_, ats, rs = shuffle(ss, ss_, ats, rs)
             
-            # pass to network
+            # pass to learn
             self.learn((ss, ss_, ats, rs), param)
+            
+            # terminate training loss change is small enough
+            if loss_targ and (len(temp_loss)==4):
+                
+                # calculate lower/higher bound by taking the average of the last 4 loss
+                low = np.array(temp_loss).mean(axis=0) * (1-loss_targ)
+                high = np.array(temp_loss).mean(axis=0) * (1+loss_targ)
+                              
+                if np.all(self.loss <= high) and np.all(self.loss >= low) and i > (epochs/3):
+                    print(f"terminated at {i} epochs")
+                    break
+            temp_loss.append(self.loss)
         
         self.update_target()
+        gc.collect()

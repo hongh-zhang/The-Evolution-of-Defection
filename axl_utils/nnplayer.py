@@ -63,11 +63,14 @@ class NNplayer(axl.Player):
         self.network = network
         self.state   = state
         
-        self.mode = 1 if mode=="dense" else 0  # dense reward = 1, sparse reward = 0
+        self.mode = 1 if mode=="dense" else 0      # dense reward = 1, sparse reward = 0
         self.learner = 1 if learner=="off" else 0  # off-policy learner = 1, on-policy = 0
-        self.N = -1
+        self.N = -1                                # how not-yet-happened turn is encoded
         self.transitions = []
         self.reset()
+    
+    def __str__(self):
+        return self.name
     
     # the following 3 functions overload the orginal implementation in axelrod library
     # they are automatically called by axl during each game
@@ -111,7 +114,7 @@ class NNplayer(axl.Player):
         
         # sparse reward
         else:
-            if s[0,0,1]==self.N:  # not last turn
+            if s[0,0,1] == self.N:  # not last turn
                 transition = (s, action, s_, 0)
                 self.reward += r
             else:                 # last turn
@@ -121,14 +124,18 @@ class NNplayer(axl.Player):
         # buffer the transition for on-policy learners (DQN)
         self.transitions.append(transition)
         
+        # push into the replay memory when match ends
+        if (s[0,0,1] != self.N) and self.learner:
+            self.push_transitions()
+        
     def push_transitions(self):
         """Push all the buffered transitions into the network's memory"""
         for t in self.transitions:
             self.network.push(t)
         self.transitions = []
     
-    def train(self, *args):
-        self.network.train(*args)
+    def train(self, *args, **kwargs):
+        self.network.train(*args, **kwargs)
     
     def plot(self, **kwargs):
         """Let the network plot its training loss"""
@@ -143,12 +150,3 @@ class NNplayer(axl.Player):
     
     def set_greedy(self, value):
         self.network.greedy = value
-    
-    
-# function handling training
-def train(nnplayer, epoch, param, show=False):
-    for _ in range(epoch):
-        start = time()
-        nnplayer.train(60, param)
-        if show:
-            print(f'loss: {nnplayer.loss},            time: +{time()-start:.2f} sec')

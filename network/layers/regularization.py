@@ -42,6 +42,11 @@ class BatchNorm_layer(Layer):
         sample_mean = np.mean(X, axis=0)
         sample_std = np.std(X, axis=0)
         
+        
+        if self.verbosity:
+            print(X)
+            print(sample_std)
+        
         # update mean & std
         if mode=='train':
             self.mean = momentum * self.mean + (1 - momentum) * sample_mean

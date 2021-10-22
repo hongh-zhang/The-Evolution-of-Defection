@@ -182,7 +182,21 @@ class NeuralNetwork:
         else:
             raise ValueError('Invalid loss function')
             
+#         # add cost for l2 regularization
+#         if regularizer:
+#             if regularizer[0].lower() == 'l2':
+#                 decay = regularizer[1]
+#                 batch = param.get("batch", 16)
+#                 def loss_fn(ytrue, yhat):
+#                     dout, loss = loss_func_inner(ytrue, yhat)
+#                     ridge_cost = self.ridge_cost() * decay / (2 * batch)
+#                     return (dout + ridge_cost), loss
+#                 self.loss_fn = loss_fn
+
         self.loss_fn = loss_func
+    
+    def ridge_cost(self):
+        return sum([l.sum_weights() for l in self.layers])
 
     # -----
     # help functions
