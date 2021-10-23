@@ -165,8 +165,8 @@ class DQN():
         max_ran = max_ran if max_ran!=-1 else len(self.loss_ls)
         
         plt.figure(figsize=(10, 8), dpi=80)
-        plt.scatter(*zip(*[(i[0], i[1][0]) for i in self.loss_ls[min_ran:max_ran]]), c='chartreuse', marker='x', label='Cooperation')
-        plt.scatter(*zip(*[(i[0], i[1][1]) for i in self.loss_ls[min_ran:max_ran]]), c='orange', marker='+', label='Defection')
+        plt.scatter(*zip(*[(i[0], i[1][0]) for i in self.loss_ls[min_ran:max_ran]]), c='tab:blue', marker='x', label='Cooperation')
+        plt.scatter(*zip(*[(i[0], i[1][1]) for i in self.loss_ls[min_ran:max_ran]]), c='tab:orange', marker='+', label='Defection')
         if log:
             plt.yscale("log")
         plt.xlabel('Epochs')
@@ -290,7 +290,7 @@ class DQN():
                 high = np.array(temp_loss).mean(axis=0) * (1+loss_targ)
                               
                 if np.all(self.loss <= high) and np.all(self.loss >= low) and i > (epochs/3):
-                    print(f"terminated at {i} epochs")
+                    # print(f"terminated at {i} epochs")
                     break
             temp_loss.append(self.loss)
         

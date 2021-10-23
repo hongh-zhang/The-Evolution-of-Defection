@@ -14,6 +14,23 @@ Stage 3: Can ANNs learn from each other? (Adversarial training)
 
 python 3.8+ is recommended for various performance boost.
 
+### File structure
+Stage 1, 2, 3 .ipynb:
+	notebooks corresponding to each section in the report
+
+network.ipynb: 
+	examples on using my network module, I would suggest to have a look on this before reading other notebooks
+
+These are accompanied by 4 folders:
+
+network: my homebrew pyTorch for implementing ANNs
+
+axl_utils: module to integrate the axl library with my network
+
+data: data (csv, ANN, any other objects) generated from the notebooks
+
+others: me appealing for working out marks
+
 
 ### network module
 The network module (inside the network folder) could be used standalone to construct simple ANNs by calling `<import network>`.

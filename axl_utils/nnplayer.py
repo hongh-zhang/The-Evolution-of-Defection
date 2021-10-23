@@ -57,11 +57,12 @@ class NNplayer(axl.Player):
     
     decision = (axl.Action.C, axl.Action.D)
     
-    def __init__(self, network, state, greedy=0.2, mode="dense", N=-1, learner="off"):
+    def __init__(self, network, state, greedy=0.2, mode="dense", N=-1, learner="off", name='DQN'):
         super().__init__()
         
-        self.network = network
+        self.name = name
         self.state   = state
+        self.network = network
         
         self.mode = 1 if mode=="dense" else 0      # dense reward = 1, sparse reward = 0
         self.learner = 1 if learner=="off" else 0  # off-policy learner = 1, on-policy = 0
