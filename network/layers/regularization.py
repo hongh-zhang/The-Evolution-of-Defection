@@ -85,12 +85,8 @@ class BatchNorm_layer(Layer):
         dgamma = np.sum(x_hat*error, axis=0)
         
         # adjust dw
-        dgamma, self.gamma1, self.gamma2 = self.optimizer(dgamma, self.gamma1, self.gamma2, param)
-        dbeta, self.beta1, self.beta2 = self.optimizer(dbeta, self.beta1, self.beta2, param)
-        
-        # weight decay
-        self.gamma = (1 - lr*decay) * self.gamma - dgamma
-        self.beta = (1 - lr*decay) * self.beta - dbeta
+        self.gamma, self.gamma1, self.gamma2 = self.optimizer.optimize(self.gamma, dgamma, self.gamma1, self.gamma2, param)
+        self.beta, self.beta1, self.beta2 = self.optimizer.optimize(self.beta, dbeta, self.beta1, self.beta2, param)
         
         return dx
     

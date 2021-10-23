@@ -80,11 +80,7 @@ class Maxout_layer(Layer):
         dw1 = np.dot(self.input.T, dout1)
         dw2 = np.dot(self.input.T, dout2)
 
-        dw1, self.m11, self.m12 = self.optimizer(dw1, self.m11, self.m12, param)
-        dw2, self.m21, self.m22 = self.optimizer(dw2, self.m21, self.m22, param)
-        
-        # decay
-        self.w1 = (1 - lr*decay) * self.w1 - dw1
-        self.w2 = (1 - lr*decay) * self.w2 - dw2
+        self.w1, self.m11, self.m12 = self.optimizer.optimize(self.w1, dw1, self.m11, self.m12, param)
+        self.w2, self.m21, self.m22 = self.optimizer.optimize(self.w2, dw2, self.m21, self.m22, param)
         
         return dx

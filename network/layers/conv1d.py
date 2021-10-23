@@ -64,10 +64,8 @@ class Conv1d_layer(Layer):
         dks = np.array([np.sum(dws[i::num, :, :], axis=0) for i in range(num)])
         
         # update
-        dks, self.m1, self.m2  = self.optimizer(dks, self.m1, self.m2, param)
-        db, self.db1, self.db2 = self.optimizer(db, self.db1, self.db2, param)
-        self.kernels -= dks
-        self.bias -= db
+        self.kernels, self.m1, self.m2  = self.optimizer.optimize(self.kernels, dks, self.m1, self.m2, param)
+        self.bias, self.db1, self.db2 = self.optimizer.optimize(self.bias, db, self.db1, self.db2, param)
         
         return np.array(dxs)
         

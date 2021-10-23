@@ -21,18 +21,43 @@ class Layer:
         return dout
     
     def set_optimizer(self, param):
-        """
-        Set the layer's optimizer+regularizer, (calling it optimizer for short)
+        if self.type in ['linear', 'maxout', 'batch_norm', 'conv1d']:
+            self.optimizer = Optimizer(param)
         
-        optimizer :: (w, dw, m1, m2, param) -> (w, m1, m2)
+    def print_parameters(self):
+        print(f"Printing {self.type} layer:")
+        pprint(vars(self))
+        
+    # function to calculate ridge cost
+    # could be overwritten by layers with weights
+    def sum_weights(self):
+        return 0
+    
+    
+    
+class Optimizer:
+    """
+    Optimizer + regularizer for layers,
+    provides a optimize function for the job:
+        
+    optimize :: (w, dw, m1, m2, param) -> (w, m1, m2)"""
+    
+    def __init__(self, param):
+        """
+        Initialize the optimizer,
            
         Parameters
         ----------
         param : dict
             hyperparameters, should contain
             
-            optimizer : string
+            optimizer : tuple (string, float, ...)
                 name for the optimizer, one of ['adam', 'momentum', 'sgd']
+                + hyperparameters for the optimizer e.g. beta1, beta2 for adam
+            
+            regularizer : tuple (string, float), or None
+                name for regularizer, one of ['l1', 'l2'] + decay/lambda hyperparameter
+                inside a tuple
             
             lr : float
                 learning rate
@@ -40,122 +65,69 @@ class Layer:
             batch : float
                 batch size
             
-            momentum : float
-                momentum when using the momentum optimizer
             
-            beta : tuple (float, float)
-                beta1 & beta2 when using the adam optimizer
-            
-            regularizer : tuple (string, float)
-                name for regularizer, one of ['l1', 'l2'] + decay/lambda hyperparameter
-                inside a tuple
         """
         
-        optimizer = param.get('optimizer', 'adam')
-        lr = param.get('lr', 1e-3)
-        eps = param.get('eps', 1e-16)
-        batch = param.get('batch', 16)
-        momentum = param.get('momentum', 0.9)
-        beta1, beta2 = param.get('beta', (0.9, 0.999))
+        self.lr = param.get('lr', 1e-3)
+        self.eps = param.get('eps', 1e-16)
+        self.batch = param.get('batch', 16)
+        self.optimizer = param.get('optimizer', ('adam', 0.9, 0.999)) 
         
-        if optimizer.lower() == 'adam':
-            def optimizer(dw, m1, m2, param):
+        if self.optimizer[0].lower() == 'adam':
+            try:
+                beta1 = self.optimizer[1]
+                beta2 = self.optimizer[2]
+            except IndexError:
+                beta1, beta2 = (0.9, 0.999)
+                print("WARNING incomplete optimizer hyperparameter, using default values")
+                
+            def optimizer_inner(dw, m1, m2, param):
                 t = param.get('t', 1)
                 m1 = beta1 * m1 + (1 - beta1) * dw
                 m2 = beta2 * m2 + (1 - beta2) * np.square(dw)
                 u1 = m1 / (1 - beta1 ** t)
                 u2 = m2 / (1 - beta2 ** t)
-                return u1 / (np.sqrt(u2) + eps), m1, m2
+                return u1 / (np.sqrt(u2) + self.eps), m1, m2
 
-        elif optimizer.lower() == 'momentum':
-            def optimizer(dw, m1, m2, param):
-                m1 = momentum * m1 + (1-momentum) * dw
+        elif self.optimizer[0].lower() == 'momentum':
+            try:
+                momentum = self.optimizer[1]
+            except IndexError:
+                momentum = 0.9
+                print("WARNING incomplete optimizer hyperparameter, using default values")
+                
+            def optimizer_inner(dw, m1, m2, param):
+                m1 = momentum * m1 + (1 - momentum) * dw
                 return m1, m1, m2
 
-        elif optimizer.lower() == 'sgd':
-            def optimizer(dw, m1, m2, param):
+        elif self.optimizer[0].lower() == 'sgd':
+            def optimizer_inner(dw, m1, m2, param):
                 return dw, m1, m2
         
         else:
             raise ValueError("Invalid optimizer")
             
         # decorate regularizer to optimizers
-        regularizer = param.get("regularizer", None)
-        if regularizer:    
-            method, decay = regularizer
+        self.regularizer = param.get("regularizer", None)
+        if self.regularizer:    
+            method, decay = self.regularizer
             
             if method.lower() == 'l1':
                 def optimize(w, dw, m1, m2, param):
-                    dw, m1, m2 = optimizer(dw, m1, m2, param)
-                    return (1 - lr*decay) * w - lr*dw, m1, m2
+                    dw, m1, m2 = optimizer_inner(dw, m1, m2, param)
+                    return (1 - self.lr * decay) * w - self.lr * dw, m1, m2
         
             elif method.lower() == 'l2':
                 def optimize(w, dw, m1, m2, param):
-                    dw, m1, m2 = optimizer(dw, m1, m2, param)
-                    return w - lr * (dw - (decay/(2*batch)*w)), m1, m2
+                    dw, m1, m2 = optimizer_inner(dw, m1, m2, param)
+                    return w - self.lr * (dw - (decay/(2 * self.batch) * w)), m1, m2
             
             else:
                 raise ValueError("Invalid regularizer")
         
         else:
             def optimize(w, dw, m1, m2, param):
-                dw, m1, m2 = optimizer(dw, m1, m2, param)
-                return w - lr * dw, m1, m2
+                dw, m1, m2 = optimizer_inner(dw, m1, m2, param)
+                return w - self.lr * dw, m1, m2
                 
-        self.optimizer = optimize
-    
-#     Deprecated implementation for backup
-#     @staticmethod
-#     def optimize(delta, param):
-#         """
-#         Optimizers for any parameter,
-#         processe gradient "dw" into actual weight change,
-
-#         (delta) delta: a delta (namedtuple defined above) containing information to update weights
-#                          moment1 is shared between 'Momentum' & 'Adam'
-#         (dict) param: hyperparameters, should include learning_rate, momentum, epsilon, beta, epoch, method,
-
-#         Returns adjusted delta_w (value to be updated)
-#         """
-
-#         optimizer = param.get('optimizer', 'momentum')
-#         lr = param.get('lr', 1e-3)
-#         batch = param.get('batch', 16)
-
-#         momentum = param.get('momentum', 0.9)
-#         beta1, beta2 = param.get('beta', (0.9, 0.999))
-
-#         eps = param.get('eps', 1e-16)
-#         t = param.get('t', 1)
-
-#         # Adam
-#         # 1st moment <- momentum as usual
-#         # 2nd moment <- scale factor
-#         # unbiased moments <- step corrected moments
-#         # dw = lr * 1st / sqrt(2nd)
-#         if optimizer.lower() == 'adam':
-#             m1 = beta1 * delta.m1 + (1 - beta1) * delta.dw
-#             m2 = beta2 * delta.m2 + (1 - beta2) * np.square(delta.dw)
-#             u1 = m1 / (1 - beta1 ** t)
-#             u2 = m2 / (1 - beta2 ** t)
-#             return (lr * u1 / (np.sqrt(u2) + eps)), m1, m2
-
-#         # Momentum
-#         # dw = lr * velocity
-#         elif optimizer.lower() == 'momentum':
-#             m1 = momentum * delta.m1 + (1-momentum) * delta.dw
-#             return (lr * m1), m1, delta.m2
-
-#         # SGD
-#         # dw = lr * dw
-#         elif optimizer.lower() == 'sgd':
-#             return (lr * delta.dw), delta.m1, delta.m2
-        
-    def print_parameters(self):
-        print(f"Printing {self.type} layer:")
-        pprint(vars(self))
-        
-    # function to calculate l2 cost
-    # could be overwritten by layers with weights
-    def sum_weights(self):
-        return 0
+        self.optimize = optimize
