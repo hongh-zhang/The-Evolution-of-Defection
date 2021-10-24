@@ -90,6 +90,10 @@ class BatchNorm_layer(Layer):
         
         return dx
     
+    def reset_moments(self):
+        self.gamma1 = self.gamma2 = np.zeros(self.gamma.shape)
+        self.beta1 = self.beta2 = np.zeros(self.beta.shape)
+    
 class Dropout_layer(Layer):
     def __init__(self, rate=0.5):
         self.rate = rate

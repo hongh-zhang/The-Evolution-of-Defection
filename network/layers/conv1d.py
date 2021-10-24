@@ -68,6 +68,10 @@ class Conv1d_layer(Layer):
         self.bias, self.db1, self.db2 = self.optimizer.optimize(self.bias, db, self.db1, self.db2, param)
         
         return np.array(dxs)
+    
+    def reset_moments(self):
+        self.m1 = self.m2 = np.zeros(self.kernels.shape)
+        self.db1 = self.db2 = np.zeros(self.bias.shape)
         
 
 class Flatten_layer(Layer):

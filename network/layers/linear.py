@@ -36,8 +36,7 @@ class Linear_layer(Layer):
             self.weights = np.concatenate((self.weights, np.ones((1,self.output_nodes))*self.bias), axis=0)
         
         # initialize moments
-        self.m1 = np.zeros(self.weights.shape)
-        self.m2 = np.zeros(self.weights.shape)
+        self.m1 = self.m2 = np.zeros(self.weights.shape)
     
     def forward(self, X, param):
         """
@@ -94,6 +93,9 @@ class Linear_layer(Layer):
     
     def sum_weights(self):
         return np.sum(np.square(self.weights))
+    
+    def reset_moments(self):
+        self.m1 = self.m2 = np.zeros(self.weights.shape)
     
 
     

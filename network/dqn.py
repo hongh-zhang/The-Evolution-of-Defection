@@ -261,7 +261,9 @@ class DQN():
             minimum percentage in loss before terminate one iteration
         """
         
-        param['t'] = 1
+        param['t'] = 1  # reset adam optimizer
+        self.policy_net.reset_moments()
+        
         temp_loss = deque([], maxlen=4)
         
         # organize data

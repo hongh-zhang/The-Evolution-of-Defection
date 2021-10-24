@@ -242,3 +242,10 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.reset()
         print("Network reinitialized.")
+        
+    def reset_moments(self):
+        for l in self.layers:
+            try:
+                l.reset_moments()
+            except AttributeError:
+                pass

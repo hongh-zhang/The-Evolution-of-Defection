@@ -84,3 +84,6 @@ class Maxout_layer(Layer):
         self.w2, self.m21, self.m22 = self.optimizer.optimize(self.w2, dw2, self.m21, self.m22, param)
         
         return dx
+    
+    def reset_moments(self):
+        self.m11 = self.m12 = self.m21 = self.m22 = np.zeros(self.w1.shape)
