@@ -18,19 +18,28 @@ Stage 3: Can DQNs learn from each other? (Multi-Agent Learning)
 #
 
 ### File structure
-Stage 1, 2, 3 .ipynb:
-	notebooks corresponding to each section in the report
-
+<pre>
 network.ipynb: 
 	examples on using my network module, I would suggest to have a look on this before reading other notebooks
 
+Stage 1, 2, 3 .ipynb:
+	notebooks corresponding to each section in the report
+
+AC_prototype.ipynb:
+	my attempt on actor-critic algorithm, not yet complete
+
+
 These are accompanied by 3 folders:
 
-network: my homebrew pyTorch for implementing ANNs
+network:
+	my homebrew pyTorch for implementing ANNs
 
-axl_utils: module to integrate the axl library with my network
+axl_utils:
+	module to integrate the axl library with my network
 
-data: data (csv, ANN, any other objects) generated from the notebooks
+data:
+	data (csv, ANN, any other objects) generated from the notebooks
+</pre>
 
 #
 
