@@ -1,7 +1,7 @@
 # The-Evolution-of-Defection
 A simple deep RL project on iterated prisoner's dilemma by [Harris Zhang](https://github.com/HarrrrisZhang).
 
-![Image of stage 2](data/s2/s2.PNG)
+![Image of stage 2](data/s2.PNG)
 
 #
 

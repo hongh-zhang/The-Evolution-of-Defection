@@ -13,13 +13,14 @@ class Maxout_layer(Layer):
     """
     
 
-    def __init__(self, input_nodes, output_nodes):
-        
+    def __init__(self, input_nodes, output_nodes, bias=0):
+        super().__init__()
         self.type = 'maxout'
         
         # number of inputs & outputs
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
+        self.bias = bias
         self.reset()
     
     def reset(self):
@@ -27,8 +28,8 @@ class Maxout_layer(Layer):
         self.w1 = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
         self.w2 = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
         
-        b1 = np.random.randn(1, self.output_nodes) * 2
-        b2 = np.random.randn(1, self.output_nodes) * 2
+        b1 = np.ones((1,self.output_nodes)) * self.bias
+        b2 = np.ones((1,self.output_nodes)) * self.bias
         
         self.w1 = np.concatenate((self.w1, b1), axis=0)
         self.w2 = np.concatenate((self.w2, b2), axis=0)

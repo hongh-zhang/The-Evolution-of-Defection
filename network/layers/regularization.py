@@ -8,11 +8,12 @@ class BatchNorm_layer(Layer):
     
     Cache = namedtuple('cache', ('x_mu', 'inv_std', 'xhat'))
     
-    def __init__(self, nodes, verbosity=0):
+    def __init__(self, nodes, bias=0, verbosity=0):
         super().__init__()
         self.nodes = nodes
         self.verbosity = verbosity
         self.type = 'batch_norm'
+        self.bias = 0
         self.reset()
     
     def reset(self):
@@ -22,7 +23,7 @@ class BatchNorm_layer(Layer):
         
         # initialize scale & shift
         self.gamma = np.expand_dims(np.ones(self.nodes), axis=0)
-        self.beta = np.expand_dims(np.zeros(self.nodes), axis=0)
+        self.beta = np.expand_dims(np.ones(self.nodes)*self.bias, axis=0)
         
         # initialize momentum
         self.gamma1 = np.zeros(self.gamma.shape)
@@ -96,9 +97,9 @@ class BatchNorm_layer(Layer):
     
 class Dropout_layer(Layer):
     def __init__(self, rate=0.5):
+        super().__init__()
         self.rate = rate
         self.type = 'dropout'
-        super().__init__()
     
     def forward(self, X, param):
 

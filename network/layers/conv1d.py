@@ -8,7 +8,7 @@ from network.layers.functions import *
 class Conv1d_layer(Layer):
     
     def __init__(self, in_channels, out_channels, in_width, kernel_width, stride=1, bias=0):
-        
+        super().__init__()
         self.type = 'conv1d'
         self.ic = in_channels  # height
         self.oc = out_channels  # number of kernels
@@ -77,6 +77,7 @@ class Conv1d_layer(Layer):
 class Flatten_layer(Layer):
     
     def __init__(self):
+        super().__init__()
         self.type = "flatten"
     
     def forward(self, X, param):

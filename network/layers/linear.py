@@ -9,10 +9,19 @@ class Linear_layer(Layer):
 
     def __init__(self, input_nodes, output_nodes, bias=0):
         """
-        Arguments:
-        (int) input_nodes = number of input nodes,
-        (int) output_nodes = number of output nodes,
-        (bool) bias: enable or disable bias,
+        Initialize the lineary layer
+        
+        Parameters
+        ----------
+        input_nodes : Int
+            number of input nodes
+            
+        input_nodes : Int
+            number of out nodes
+            
+        bias : Num or False
+            value for bias to be initialized to
+
         """
         super().__init__()
         
@@ -21,8 +30,7 @@ class Linear_layer(Layer):
         # number of inputs & outputs
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
-        self.bias = bias
-        self.with_bias = True
+        self.bias = bias if type(bias) in [int, float] else False
         self.reset()
     
     def reset(self):
@@ -31,7 +39,7 @@ class Linear_layer(Layer):
         # this implementation treats bias as an additional weight parameter
         # Xavier initialization
         self.weights = np.random.randn(self.input_nodes, self.output_nodes) / np.sqrt(self.input_nodes/2)
-        if self.bias:
+        if self.bias is not False:
             # concat zeros to weights as additional row
             self.weights = np.concatenate((self.weights, np.ones((1,self.output_nodes))*self.bias), axis=0)
         
@@ -41,16 +49,15 @@ class Linear_layer(Layer):
     def forward(self, X, param):
         """
         Forward inputs
-        Arguments:
-        (2d array) X: input, in the form of 2d numpy array #of instances * #of attributes
+        
+        Parameters
+        ----------
+        X : ndarray
+            input, in the form of 2d numpy array [#of instances * #of attributes]
         """
-        if self.bias:
-            if self.with_bias:
-                # concat ones to x as additional column
-                X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
-            else:
-                # concat 0 instead of 1
-                X = np.concatenate((X, np.zeros((X.shape[0], 1))), axis=1)
+        if self.bias is not False:
+            # concat ones to x as additional column
+            X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
         
         # calculate output
         output = np.dot(X, self.weights)
@@ -64,8 +71,8 @@ class Linear_layer(Layer):
     def backward(self, dout, param):
         """
         Error backpropogation function,
-        Calls self.update to update weights,
-        Returns this layer's error for the preceding error to propogate
+        update the layer itself then
+        return dx to propagate to the next layer
         
         Parameters
         ----------
@@ -80,7 +87,7 @@ class Linear_layer(Layer):
         decay = param.get("decay", 0.01)
         
         # calculate error to pass
-        if self.bias:
+        if self.bias is not False:
             dx = np.dot(dout, self.weights.T[:,:-1])  # bias is not passed
         else:
             dx = np.dot(dout, self.weights.T)

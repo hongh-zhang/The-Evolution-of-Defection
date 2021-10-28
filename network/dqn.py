@@ -144,6 +144,7 @@ class DQN():
         return self.policy_net(state)
     
     def update_target(self):
+        """Update the target_net by deepcopying policy_net"""
         self.target_net = deepcopy(self.policy_net)
         gc.collect()
         
@@ -175,12 +176,13 @@ class DQN():
         plt.show()
         
     def reset(self):
-        """Re-initlize the networks"""
+        """Re-initliaze the networks (randomize the weights etc.)"""
         self.policy_net.reset()
         self.update_target()
         
     def test_mode(self, on):
-        """Enter/exit test mode, which eliminate random behaviour and print out estimated Q-values"""
+        """Enter/exit test mode, which eliminate random behaviour and print out estimated Q-values.
+        This is called when I use 'with' statement in the notebook."""
         if on:
             self.verbosity = True
             self.temp = self.greedy
@@ -256,14 +258,27 @@ class DQN():
         repeatedly for {epoch} iterations,
         after the learning finished, update target network to finish this cycle of training.
         
+        Parameters
+        ----------
+        epochs : int
+            number of epochs to train
+        
+        param : dict
+            hyperparameters
         
         (optional) loss_targ : float
             minimum percentage in loss before terminate one iteration
+            * this is a disaster don't use it
+            * I'm looking into statistical tests to correctly implement auto-termination
         """
         
-        param['t'] = 1  # reset adam optimizer
+        # reset adam optimizer by
+        # 1. reset the adagrad counter
+        # 2. clear the momentum from last iteration
+        param['t'] = 1
         self.policy_net.reset_moments()
         
+        # queue for recoding running loss, for auto termination
         temp_loss = deque([], maxlen=4)
         
         # organize data
@@ -274,8 +289,6 @@ class DQN():
         rs  = np.array(ts.reward, ndmin=2).T
         del ts
         gc.collect()
-        
-        #print(ss[:10], ss_[:10], ats[:10], rs[:10])
         
         for i in range(epochs):
             

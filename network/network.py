@@ -133,7 +133,7 @@ class NeuralNetwork:
             if magnitude > clip:
                 dout = dout / magnitude * clip
             # pass to layer and compute the error to the next layer
-            dout = layer.backward(dout, param)
+            dout = layer.backward2(dout, param)
     
     def validate(self, X_t, y_t, param):
         """Test performaance against validation set"""
@@ -195,6 +195,7 @@ class NeuralNetwork:
 
         self.loss_fn = loss_func
     
+    # additional cost for L2 regularization
     def ridge_cost(self):
         return sum([l.sum_weights() for l in self.layers])
 
@@ -242,8 +243,9 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.reset()
         print("Network reinitialized.")
-        
+    
     def reset_moments(self):
+        """Reset moments for adam & momentum optimizers"""
         for l in self.layers:
             try:
                 l.reset_moments()

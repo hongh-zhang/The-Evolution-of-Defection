@@ -5,11 +5,11 @@ from pprint import pprint
 from collections import namedtuple
 
 class Layer:
-    """This is a blank template for layers,
-       provides basic functions and an optimizer."""
+    """This is a blank template for layers."""
     
     def __init__(self):
         self.type = "blank"
+        self.freeze = False
         
     def reset(self):
         pass
@@ -19,6 +19,12 @@ class Layer:
     
     def backward(self, dout, param):
         return dout
+    
+    # backward2 allows a layer to be freezed
+    def backward2(self, *args, **kwargs):
+        if not self.freeze:
+            return self.backward(*args, **kwargs)
+        return np.nan
     
     def set_optimizer(self, param):
         if self.type in ['linear', 'maxout', 'batch_norm', 'conv1d']:
@@ -68,11 +74,15 @@ class Optimizer:
             
         """
         
+        # unpack hyperparameters
         self.lr = param.get('lr', 1e-3)
         self.eps = param.get('eps', 1e-16)
         self.batch = param.get('batch', 16)
         self.optimizer = param.get('optimizer', ('adam', 0.9, 0.999)) 
         
+        # set optimizer function according to name given
+        # these functions will be curried with the hyperparameters above
+        # to save runtime
         if self.optimizer[0].lower() == 'adam':
             try:
                 beta1 = self.optimizer[1]

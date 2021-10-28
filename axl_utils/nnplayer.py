@@ -11,9 +11,28 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class State():
-    """State container with configurable encoding"""
+    """
+    State container with configurable encoding
+    will represent state in 2d arrays
+    """
     
     def __init__(self, depth, C=1, D=0, N=-1):
+        """
+        Parameters
+        ----------
+        depth : Int
+            deque length (which should be # of turns in the game)
+            
+        (optional) C : Num
+            encoding for cooperation
+        
+        (optional) D : Num
+            encoding for defection
+            
+        (optional) N : Num
+            encoding for not-yet-happened turns
+            
+        """
         self.C = C
         self.D = D
         self.N = N
@@ -21,21 +40,25 @@ class State():
         self.reset()
         
     def reset(self):
+        """Clear memory for new game"""
         self.state = [deque([self.N for _ in range(self.depth)], maxlen=self.depth) for _ in range(2)]
     
     def __repr__(self):
         return str(self.state).replace("),", "),\n")
     
     def values(self):
+        """Return the state, in 3d array (with only 1 2d element)"""
         return np.array(self.state, ndmin=3)
     
     def push(self, *args):
+        """Push interaction into record"""
         play, coplay = map(self.encode, args)
         self.state[0].append(play)
         self.state[1].append(coplay)
         return self.values()
     
     def encode(self, play):
+        """Encode axl.Action object into numerical representation"""
         if play == axl.Action.C:
             return self.C
         else:
@@ -44,6 +67,7 @@ class State():
         
 class NNplayer(axl.Player):
     """
+    
     """
     
     name = 'NNplayer'
