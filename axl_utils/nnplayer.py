@@ -16,7 +16,7 @@ class State():
     will represent state in 2d arrays
     """
     
-    def __init__(self, depth, C=1, D=0, N=-1):
+    def __init__(self, depth, C=1, D=0.1, N=-1):
         """
         Parameters
         ----------
