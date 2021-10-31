@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 dill.dump(ls, file)
             with open(f'data/s3/p1_2_{i}.pkl', "wb") as file:
                 dill.dump(p1, file)
-            with open(f'data/s3/p2__2{i}.pkl', "wb") as file:
+            with open(f'data/s3/p2_2_{i}.pkl', "wb") as file:
                 dill.dump(p2, file)
 
         print(f'--------Iter {i}--------')
