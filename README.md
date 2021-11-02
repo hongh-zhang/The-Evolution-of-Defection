@@ -1,19 +1,20 @@
 # The-Evolution-of-Defection
-A simple deep RL project on iterated prisoner's dilemma by [Harris Zhang](https://github.com/HarrrrisZhang).
+A simple deep RL project on iterated prisoner's dilemma by [Honghao Zhang](https://github.com/hongh-zhang).
 
-![Image of stage 2](data/s2.PNG)
+![Image of stage 2](data/s2.png)
 
 #
 
 ### Project
 
-The project is divided into 3 stages:
+The projects tries to explore deep Q-learning network's capability in iterated prisoner's dilemma.
+It is divided into 3 stages:
 
-Stage 1: What is DQN and how do they learn? (learn IPD against TitForTat)
+Stage 1: Focus on implementing a DQN and investigate how it learns
 
-Stage 2: Can they learn the optimal strategy (TitForTat)? (play against multiple opponents)
+Stage 2: Can it learn the optimal strategy (TitForTat)? by training against multiple opponents in tournaments
 
-Stage 3: Can DQNs learn from each other? (Multi-Agent Learning)
+Stage 3: Continue the exploration with distributed multi-agent learning
 
 #
 
@@ -32,7 +33,7 @@ AC_prototype.ipynb:
 These are accompanied by 3 folders:
 
 network:
-	my homebrew pyTorch for implementing ANNs
+	my homebrew pyTorch/Tensorflow
 
 axl_utils:
 	module to integrate the axl library with my network
@@ -56,3 +57,13 @@ This will import the following class objects:
 - Conv1d_layer (it works, buy every pixel in the same kernel gets a similar update, not sure if it is supposed to be so) (stride not yet implemented)
 
 See network.ipynb for details.
+
+#
+
+### TODO (maybe)(if i get bored revising finance)
+
+- implement actor-critic
+- implement DQN variations for stage 3
+
+#
+what else to put into a README?

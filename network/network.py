@@ -37,6 +37,11 @@ class NeuralNetwork:
         self.dummy_param = {"lr": None, 'batch': None, "momentum": None, "mode": "test", 
                             "eps": None, "beta":None, "epoch": None, 'method': None, 
                             't': None, 'clip': None, 'decay': None, "loss_fn":"mse"}
+        
+        # new param should look like this
+        # but i'm not sure if changing this will break saved models
+#         param = {"lr": None, 'batch': None, "mode": "test", "eps": 1e-16, "epoch": None, 't': None, 'clip': None,
+#          'optimizer': None, 'regularizer': None, "loss_fn":"mse"}
     
     def forward(self, X, param):
         """Forward signal"""
@@ -198,10 +203,6 @@ class NeuralNetwork:
     # additional cost for L2 regularization
     def ridge_cost(self):
         return sum([l.sum_weights() for l in self.layers])
-
-    # -----
-    # help functions
-    # ----
     
     @staticmethod
     def split_data(X, y, batch_size, rand=True):

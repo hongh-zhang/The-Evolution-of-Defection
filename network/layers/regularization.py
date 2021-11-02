@@ -43,7 +43,7 @@ class BatchNorm_layer(Layer):
         sample_mean = np.mean(X, axis=0)
         sample_std = np.std(X, axis=0)
         
-        
+        # for debugging
         if self.verbosity:
             print(X)
             print(sample_std)
@@ -68,9 +68,6 @@ class BatchNorm_layer(Layer):
         return X
     
     def backward(self, error, param):
-        
-        lr = param.get("lr", 1e-3)
-        decay = param.get("decay", 0.01)
         
         # adapted from https://kevinzakka.github.io/2016/09/14/batch_normalization/
         N, D = error.shape
@@ -101,6 +98,7 @@ class Dropout_layer(Layer):
         self.rate = rate
         self.type = 'dropout'
     
+    # forward using inverse dropout
     def forward(self, X, param):
 
         mode = param.get("mode", 'test')

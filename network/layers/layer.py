@@ -2,10 +2,9 @@
 
 import numpy as np
 from pprint import pprint
-from collections import namedtuple
 
 class Layer:
-    """This is a blank template for layers."""
+    """This is a blank template for layers, also sets some global attributes/methods."""
     
     def __init__(self):
         self.type = "blank"
@@ -44,14 +43,18 @@ class Layer:
 class Optimizer:
     """
     Optimizer + regularizer for layers,
-    provides a optimize function for the job:
+    provides a optimize function for the job,
         
-    optimize :: (w, dw, m1, m2, param) -> (w, m1, m2)"""
+    optimize :: (w, dw, m1, m2, param) -> (w, m1, m2)
+    
+    to instruct layers on how to update their weights
+    """
     
     def __init__(self, param):
         """
-        Initialize the optimizer,
-           
+        Initialize the optimizer, set up the optimize function
+        layers can then call self.optimizer.optimze(...)
+        
         Parameters
         ----------
         param : dict
@@ -70,7 +73,6 @@ class Optimizer:
             
             batch : float
                 batch size
-            
             
         """
         
@@ -141,3 +143,5 @@ class Optimizer:
                 return w - self.lr * dw, m1, m2
                 
         self.optimize = optimize
+        
+# proceed to linear.py to see a full implementation

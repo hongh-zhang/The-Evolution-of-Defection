@@ -1,7 +1,6 @@
 # maxout layer
 
 import numpy as np
-from collections import namedtuple
 from network.layers.layer import Layer
 
 
@@ -62,9 +61,6 @@ class Maxout_layer(Layer):
         return out
     
     def backward(self, dout, param):
-        
-        lr = param.get("lr", 1e-3)
-        decay = param.get("decay", 0.01)
         
         dout1 = dout * self.pos1
         dout2 = dout * self.pos2

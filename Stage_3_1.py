@@ -78,11 +78,11 @@ if __name__ == '__main__':
             print(summary.loc[['DQN1','DQN2'], ['Median_score', 'Cooperation_rating']])
 
             # save
-            with open('data/s3/tn_results.pkl', "wb") as file:
+            with open('data/s3/tn_results_1.pkl', "wb") as file:
                 dill.dump(ls, file)
-            with open(f'data/s3/p1_{i}.pkl', "wb") as file:
+            with open(f'data/s3/p1_1_{i}.pkl', "wb") as file:
                 dill.dump(p1, file)
-            with open(f'data/s3/p2_{i}.pkl', "wb") as file:
+            with open(f'data/s3/p2_1_{i}.pkl', "wb") as file:
                 dill.dump(p2, file)
 
         print(f'--------Iter {i}--------')

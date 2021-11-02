@@ -1,4 +1,4 @@
-# This file contains Layer objects to be used in neural networks
+# This file contains linear & activation Layer
 
 import numpy as np
 from collections import namedtuple
@@ -83,9 +83,6 @@ class Linear_layer(Layer):
             hyperparameters
         """
         
-        lr = param.get("lr", 1e-3)
-        decay = param.get("decay", 0.01)
-        
         # calculate error to pass
         if self.bias is not False:
             dx = np.dot(dout, self.weights.T[:,:-1])  # bias is not passed
@@ -164,7 +161,7 @@ class Activation_layer(Layer):
     
     def forward(self, X, param):
         output = self.func_forward(X)
-        self.cache = Activation_layer.Cache(X, output)
+        self.cache = self.Cache(X, output)
         return output
     
     def backward(self, dout, param):
