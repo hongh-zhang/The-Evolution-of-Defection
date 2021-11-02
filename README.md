@@ -25,6 +25,9 @@ network.ipynb:
 
 Stage 1, 2, 3 .ipynb:
 	notebooks corresponding to each section in the report
+    
+Stage ... .py:
+    training loops from stage 2 or 3, to be runned in terminals for data collections
 
 AC_prototype.ipynb:
 	my attempt on actor-critic algorithm, not yet complete
