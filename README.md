@@ -5,6 +5,14 @@ A simple deep RL project on iterated prisoner's dilemma by [Honghao Zhang](https
 
 #
 
+### Update 6 Nov
+
+requirements.txt now contains the full list of required libraries, (hopefully)
+
+install them with "pip install -r requirements.txt" (or conda)
+
+#
+
 ### Project
 
 The projects tries to explore deep Q-learning network's capability in iterated prisoner's dilemma.
