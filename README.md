@@ -5,11 +5,11 @@ A simple deep RL project on iterated prisoner's dilemma by [Honghao Zhang](https
 
 #
 
-### Update 6 Nov
+### dev branch TODO
 
-requirements.txt now contains the full list of required libraries, (hopefully)
-
-install them with "pip install -r requirements.txt" (or conda)
+- rewrite parts of network module in c++ to further optimize (as a practice to c++ coding & interfacing)
+- implement actor-critic
+- implement DQN variations for stage 3, maybe
 
 #
 
@@ -70,11 +70,3 @@ This will import the following class objects:
 See network.ipynb for details.
 
 #
-
-### TODO (maybe)(if i get bored revising finance)
-
-- implement actor-critic
-- implement DQN variations for stage 3
-
-#
-what else to put into a README?
