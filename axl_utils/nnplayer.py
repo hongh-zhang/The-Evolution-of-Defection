@@ -97,7 +97,7 @@ class NNplayer(axl.Player):
     def __str__(self):
         return self.name
     
-    # the following 3 functions overload the orginal implementation in axelrod library
+    # the following 3 functions override the orginal implementation in axelrod library
     # they are automatically called by axl during each game
     def reset(self):
         """Reset the states to start a new game"""
