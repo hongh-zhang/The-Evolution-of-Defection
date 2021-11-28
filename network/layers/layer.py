@@ -38,6 +38,8 @@ class Layer:
     def sum_weights(self):
         return 0
     
+    def get_weights(self):
+        pass
     
     
 class Optimizer:

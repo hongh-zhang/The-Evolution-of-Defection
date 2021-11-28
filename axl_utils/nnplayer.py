@@ -8,7 +8,7 @@ from time import time
 from collections import deque, namedtuple
 
 Transition = namedtuple('Transition', 
-                        ('state', 'action', 'next_state', 'reward'))
+                        ('state', 'action', 'next_state', 'reward', 'done'))
 
 class State():
     """
@@ -64,7 +64,7 @@ class State():
         else:
             return self.D
         
-        
+
 class NNplayer(axl.Player):
     """
     
@@ -81,17 +81,16 @@ class NNplayer(axl.Player):
     
     decision = (axl.Action.C, axl.Action.D)
     
-    def __init__(self, network, state, greedy=0.2, mode="dense", N=-1, learner="off", name='DQN'):
+    def __init__(self, network, state, reward='dense', policy='off', name='DQN'):
         super().__init__()
         
-        self.name = name
+        self.name    = name
         self.state   = state
         self.network = network
         
-        self.mode = 1 if mode=="dense" else 0      # dense reward = 1, sparse reward = 0
-        self.learner = 1 if learner=="off" else 0  # off-policy learner = 1, on-policy = 0
-        self.N = -1                                # how not-yet-happened turn is encoded
-        self.transitions = []
+        self.policy_mode = True if policy=="off" else False      # off-policy = 1, on-policy = 0
+        self.reward_mode = True if reward=="dense" else False    # dense reward = 1, sparse reward = 0
+        self.N = self.state.N                                    # how not-yet-happened turn is encoded
         self.reset()
     
     def __str__(self):
@@ -100,15 +99,12 @@ class NNplayer(axl.Player):
     # the following 3 functions override the orginal implementation in axelrod library
     # they are automatically called by axl during each game
     def reset(self):
-        """Reset the states to start a new game"""
+        """Reset the attributes to start a new game"""
         self.reward = 0
         self.state.reset()
-        self._history = axl.history.History()
-        
-        # push buffer into memory then reset it
-        if self.learner:
-            self.push_transitions()
         self.transitions = []
+        self.network.reset_state()
+        self._history = axl.history.History()
         
     def strategy(self, opponent):
         """Query the network (each turn) to make decision"""
@@ -122,9 +118,20 @@ class NNplayer(axl.Player):
     # --------------------------------------------------------------------------------
         
     def update_state(self, play, coplay):
-        """Update current game state & record transition into replay memory"""
+        """Update current game state & record transition into replay memory
+        
+        Parameters
+        ----------
+        play : axl.Action
+            action from last turn, (C or D)
+        coplay: axl.Action
+        
+        """
+        
+        # update game state
         s  = self.state.values()
         s_ = self.state.push(play, coplay)
+        last_turn = s[0,0,1]!=self.N
         
         # compute reward
         r  = axl.interaction_utils.compute_scores([(play, coplay)])[0][0]
@@ -133,31 +140,42 @@ class NNplayer(axl.Player):
         action = [True, False] if play==axl.Action.C else [False, True]
         
         # dense reward
-        if self.mode:
-            r  = r if s[0,0,1]==-1 else np.NaN  # set last turn reward to NaN
-            transition = (s, action, s_, r)
+        if self.reward_mode:
+            transition = Transition(s, action, s_, r, last_turn)
         
         # sparse reward
         else:
-            if s[0,0,1] == self.N:  # not last turn
-                transition = (s, action, s_, 0)
+            if not last_turn:
+                transition = Transition(s, action, s_, 0, last_turn)
                 self.reward += r
-            else:                 # last turn
-                transition = (s, action, s_, r+self.reward)
+            else:
+                transition = Transition(s, action, s_, r+self.reward, last_turn)
                 self.reward = 0
         
-        # buffer the transition for on-policy learners (DQN)
+        # record transitions for training
         self.transitions.append(transition)
         
-        # push into the replay memory when match ends
-        if (s[0,0,1] != self.N) and self.learner:
-            self.push_transitions()
-        
-    def push_transitions(self):
-        """Push all the buffered transitions into the network's memory"""
-        for t in self.transitions:
-            self.network.push(t)
-        self.transitions = []
+        # last turn operations
+        if last_turn:
+            self.end_episode()
+    
+    def end_episode(self):
+        # for off-policy learner,
+        # push all transitions into replay memory
+        if self.policy_mode:
+            for t in self.transitions:
+                self.network.push(t)
+            self.transitions = []
+
+        # for on-policy learner,
+        # push all rewards,
+        # then call train function
+        else:
+            for t in self.transitions:
+                self.network.push(t.reward)
+            self.transitions = []
+            self.network.train()
+    
     
     def train(self, *args, **kwargs):
         self.network.train(*args, **kwargs)

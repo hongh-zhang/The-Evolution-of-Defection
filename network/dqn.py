@@ -14,7 +14,7 @@ from collections import namedtuple, deque
 from network import NeuralNetwork
 
 Transition = namedtuple('Transition', 
-                        ('state', 'action', 'next_state', 'reward'))
+                        ('state', 'action', 'next_state', 'reward', 'done'))
 
 
 
@@ -217,10 +217,10 @@ class DQN():
         self.policy_net.set_up(param)
 
         # split training data into batches
-        ss, ss_, ats, rs = map(lambda x: np.array_split(x, sections), data)
+        ss, ss_, ats, rs, ds = map(lambda x: np.array_split(x, sections), data)
         
         # train
-        for s, s_, at, r in zip(ss, ss_, ats, rs):
+        for s, s_, at, r, d in zip(ss, ss_, ats, rs, ds):
             
             # (1)
             # estimate value of current state
@@ -233,10 +233,8 @@ class DQN():
             # (3)
             # (the regression target)
             # expected value of current state = discounted E(next) + immediate reward
-            E_values = self.gamma*Q_values_ + r
-            
-            # hard code the value of last state to 0.0
-            np.nan_to_num(E_values, copy=False, nan=0.0)
+            # if last turn (d=False), E_value = r
+            E_values = self.gamma*Q_values_*d + r
 
             # (4)
             # feedback
@@ -287,15 +285,17 @@ class DQN():
         ss_ = np.vstack(ts.next_state)
         ats = np.array(ts.action, ndmin=2)
         rs  = np.array(ts.reward, ndmin=2).T
+        ds  = np.logical_not(np.array(ts.done, ndmin=2)).T
+        
         del ts
         gc.collect()
         
         for i in range(epochs):
             
-            ss, ss_, ats, rs = shuffle(ss, ss_, ats, rs)
+            ss, ss_, ats, rs, ds = shuffle(ss, ss_, ats, rs, ds)
             
             # pass to learn
-            self.learn((ss, ss_, ats, rs), param)
+            self.learn((ss, ss_, ats, rs, ds), param)
             
             # terminate training loss change is small enough
             if loss_targ and (len(temp_loss)==4):
@@ -311,3 +311,7 @@ class DQN():
         
         self.update_target()
         gc.collect()
+    
+    # to be consistent with on-policy learners
+    def reset_state(self):
+        pass

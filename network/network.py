@@ -30,18 +30,12 @@ class NeuralNetwork:
         """
 
         self.layers = layers
+        self.init_weights = self.get_weights()
         
         self.train_loss = []  # for storing loss value in each epoch
         self.test_loss = []
-        
-        self.dummy_param = {"lr": None, 'batch': None, "momentum": None, "mode": "test", 
-                            "eps": None, "beta":None, "epoch": None, 'method': None, 
-                            't': None, 'clip': None, 'decay': None, "loss_fn":"mse"}
-        
-        # new param should look like this
-        # but i'm not sure if changing this will break saved models
-#         param = {"lr": None, 'batch': None, "mode": "test", "eps": 1e-16, "epoch": None, 't': None, 'clip': None,
-#          'optimizer': None, 'regularizer': None, "loss_fn":"mse"}
+        self.dummy_param = {"lr": None, 'batch': None, "mode": "test", "eps": 1e-16, "epoch": None, 't': None, 'clip': None,
+         'optimizer': None, 'regularizer': None, "loss_fn":"mse"}
     
     def forward(self, X, param):
         """Forward signal"""
@@ -159,7 +153,7 @@ class NeuralNetwork:
             l.set_optimizer(param)
             
     def set_loss_func(self, param):
-        """Return a function that calculate output loss,
+        """Set loss function according to param,
         loss_fn :: (ytrue, yhat) -> (dout, loss)"""
         
         function = param.get("loss_fn", "mse").lower()
@@ -186,17 +180,6 @@ class NeuralNetwork:
             
         else:
             raise ValueError('Invalid loss function')
-            
-#         # add cost for l2 regularization
-#         if regularizer:
-#             if regularizer[0].lower() == 'l2':
-#                 decay = regularizer[1]
-#                 batch = param.get("batch", 16)
-#                 def loss_fn(ytrue, yhat):
-#                     dout, loss = loss_func_inner(ytrue, yhat)
-#                     ridge_cost = self.ridge_cost() * decay / (2 * batch)
-#                     return (dout + ridge_cost), loss
-#                 self.loss_fn = loss_fn
 
         self.loss_fn = loss_func
     
@@ -252,3 +235,12 @@ class NeuralNetwork:
                 l.reset_moments()
             except AttributeError:
                 pass
+            
+    def get_weights(self):
+        """Return a list of layers' weights"""
+        return [y for x in [l.get_weights() for l in self.layers] if x != None for y in x]
+    
+    def delta_weights(self):
+        """Calculate weight changes compared to initial values"""
+        curr = self.get_weights()
+        return [(curr[i] - self.init_weights[i]) for i in range(len(curr))]

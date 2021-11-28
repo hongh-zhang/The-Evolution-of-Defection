@@ -84,3 +84,6 @@ class Maxout_layer(Layer):
     
     def reset_moments(self):
         self.m11 = self.m12 = self.m21 = self.m22 = np.zeros(self.w1.shape)
+        
+    def get_weights(self):
+        return self.w1, self.w2

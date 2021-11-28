@@ -73,6 +73,8 @@ class Conv1d_layer(Layer):
         self.m1 = self.m2 = np.zeros(self.kernels.shape)
         self.db1 = self.db2 = np.zeros(self.bias.shape)
         
+    def get_weights(self):
+        return self.kernels, self.bias
 
 class Flatten_layer(Layer):
     

@@ -95,6 +95,9 @@ class Linear_layer(Layer):
         
         return dx
     
+    def get_weights(self):
+        return tuple([self.weights])
+    
     def sum_weights(self):
         return np.sum(np.square(self.weights))
     

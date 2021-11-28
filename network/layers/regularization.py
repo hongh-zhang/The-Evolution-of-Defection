@@ -92,6 +92,9 @@ class BatchNorm_layer(Layer):
         self.gamma1 = self.gamma2 = np.zeros(self.gamma.shape)
         self.beta1 = self.beta2 = np.zeros(self.beta.shape)
     
+    def get_weights(self):
+        return self.gamma, self.beta
+    
 class Dropout_layer(Layer):
     def __init__(self, rate=0.5):
         super().__init__()
