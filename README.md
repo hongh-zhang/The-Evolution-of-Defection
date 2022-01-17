@@ -7,10 +7,12 @@ A simple deep RL project on iterated prisoner's dilemma by [Honghao Zhang](https
 
 ### dev branch TODO
 
-- rewrite parts of network module in c++ to further optimize (as a practice to c++ coding & interfacing)
-- implement actor-critic
-- implement DQN variations for stage 3, maybe
+- <s>implement actor-critic </s>
+- <s>implement DQN variations for stage 3, maybe </s>
 
+
+Building up my RL knowledge [here](https://github.com/hongh-zhang/RL-playground)
+	
 #
 
 ### Project
