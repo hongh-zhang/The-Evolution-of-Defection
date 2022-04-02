@@ -1,17 +1,10 @@
 # The-Evolution-of-Defection
-A simple deep RL project on iterated prisoner's dilemma by [Honghao Zhang](https://github.com/hongh-zhang).
+A simple deep RL project on iterated prisoner's dilemma.
 
 ![Image of stage 2](data/s2.png)
 
 #
 
-### Update 6 Nov
-
-requirements.txt now contains the full list of required libraries, (hopefully)
-
-install them with "pip install -r requirements.txt" (or conda)
-
-#
 
 ### Project
 
@@ -36,10 +29,6 @@ Stage 1, 2, 3 .ipynb:
     
 Stage ... .py:
     training loops from stage 2 or 3, to be runned in terminals for data collections
-
-AC_prototype.ipynb:
-	my attempt on actor-critic algorithm, not yet complete
-
 
 These are accompanied by 3 folders:
 
@@ -70,11 +59,3 @@ This will import the following class objects:
 See network.ipynb for details.
 
 #
-
-### TODO (maybe)(if i get bored revising finance)
-
-- implement actor-critic
-- implement DQN variations for stage 3
-
-#
-what else to put into a README?
